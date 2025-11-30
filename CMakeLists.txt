@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(plugin-analyser VERSION 1.0.0 LANGUAGES CXX)
+project(plugin-analyser VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,9 +8,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Note: You'll need to set JUCE_DIR or use FetchContent
 # For now, we'll assume JUCE is available via find_package or FetchContent
 
-option(PLUGIN_ANALYSER_USE_FETCH_JUCE "Use FetchContent to get JUCE" ON)
+# Try to use local JUCE installation first (faster builds)
+set(JUCE_DIR "~/JUCE")
+get_filename_component(JUCE_DIR ${JUCE_DIR} ABSOLUTE)
 
-if(PLUGIN_ANALYSER_USE_FETCH_JUCE)
+option(PLUGIN_ANALYSER_USE_FETCH_JUCE "Use FetchContent to get JUCE if local not found" ON)
+
+if(EXISTS ${JUCE_DIR}/CMakeLists.txt)
+    message(STATUS "Using local JUCE installation at ${JUCE_DIR}")
+    add_subdirectory(${JUCE_DIR} ${CMAKE_BINARY_DIR}/juce)
+    set(JUCE_ENABLE_MODULE_SOURCE_GROUPS OFF)
+    set(JUCE_BUILD_EXTRAS OFF)
+    set(JUCE_BUILD_EXAMPLES OFF)
+elseif(PLUGIN_ANALYSER_USE_FETCH_JUCE)
+    message(STATUS "Local JUCE not found at ${JUCE_DIR}, downloading via FetchContent...")
     include(FetchContent)
     FetchContent_Declare(
         juce
