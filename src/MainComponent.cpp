@@ -153,16 +153,22 @@ void MainComponent::buttonClicked(juce::Button* button) {
     } else if (button == &selectAllButton) {
         selectedParameters.resize(availableParameters.size(), true);
         std::fill(selectedParameters.begin(), selectedParameters.end(), true);
+        // Force ListBox to refresh all visible rows
+        int currentScrollPos = parameterListBox.getVerticalPosition();
         parameterListBox.updateContent();
-        parameterListBox.repaint(); // Force immediate repaint
-        repaint(); // Also repaint the component itself
+        // Scroll slightly to force repaint of all visible items
+        parameterListBox.scrollToEnsureRowIsOnscreen(0);
+        parameterListBox.setVerticalPosition(currentScrollPos);
         updateParameterList();
     } else if (button == &deselectAllButton) {
         selectedParameters.resize(availableParameters.size(), false);
         std::fill(selectedParameters.begin(), selectedParameters.end(), false);
+        // Force ListBox to refresh all visible rows
+        int currentScrollPos = parameterListBox.getVerticalPosition();
         parameterListBox.updateContent();
-        parameterListBox.repaint(); // Force immediate repaint
-        repaint(); // Also repaint the component itself
+        // Scroll slightly to force repaint of all visible items
+        parameterListBox.scrollToEnsureRowIsOnscreen(0);
+        parameterListBox.setVerticalPosition(currentScrollPos);
         updateParameterList();
     } else if (button == &runMeasurementButton) {
         runMeasurement();
