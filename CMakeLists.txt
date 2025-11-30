@@ -82,6 +82,11 @@ target_compile_definitions(PluginAnalyser
         JUCE_PLUGINHOST_VST3=1
 )
 
+# Add DEBUG definition for debug builds (for dev-only defaults)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(PluginAnalyser PRIVATE DEBUG=1)
+endif()
+
 target_link_libraries(PluginAnalyser
     PRIVATE
         juce::juce_audio_processors
