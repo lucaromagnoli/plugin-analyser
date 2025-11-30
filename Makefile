@@ -45,7 +45,7 @@ build-release:
 	@echo "🔨 Building (Release)..."
 	@cmake --build $(BUILD_RELEASE) --parallel
 	@echo "✅ Build complete! Executables in $(BUILD_RELEASE)/"
-	@echo "📍 GUI app: $(BUILD_RELEASE)/PluginAnalyser"
+	@echo "📍 GUI app: $(BUILD_RELEASE)/Plugin Analyser.app"
 	@echo "📍 CLI tool: $(BUILD_RELEASE)/plugin_measure_grid_cli"
 
 # Clean build directories
@@ -100,7 +100,10 @@ install:
 # Run GUI application
 run-gui: build-release
 	@echo "🚀 Launching GUI application..."
-	@if [ -f $(BUILD_RELEASE)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser ]; then \
+	@if [ -d "$(BUILD_RELEASE)/Plugin Analyser.app" ]; then \
+		open "$(BUILD_RELEASE)/Plugin Analyser.app"; \
+		echo "✅ App launched: $(BUILD_RELEASE)/Plugin Analyser.app"; \
+	elif [ -f $(BUILD_RELEASE)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser ]; then \
 		open $(BUILD_RELEASE)/PluginAnalyser.app; \
 	elif [ -f $(BUILD_RELEASE)/PluginAnalyser ]; then \
 		$(BUILD_RELEASE)/PluginAnalyser & \

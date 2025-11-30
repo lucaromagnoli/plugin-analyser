@@ -70,7 +70,7 @@ set(SOURCES
 )
 
 # Create GUI application
-add_executable(PluginAnalyser ${SOURCES})
+add_executable(PluginAnalyser MACOSX_BUNDLE ${SOURCES})
 
 target_compile_definitions(PluginAnalyser
     PRIVATE
@@ -92,9 +92,19 @@ target_link_libraries(PluginAnalyser
         juce::juce_gui_extra
 )
 
-# Set output name
+# Set macOS bundle properties for proper app bundle with dock icon
 set_target_properties(PluginAnalyser PROPERTIES
-    OUTPUT_NAME "PluginAnalyser"
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_INFO_STRING "Plugin Analyser - VST3 Plugin Analysis Tool"
+    MACOSX_BUNDLE_ICON_FILE ""
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.pluginanalyser.app"
+    MACOSX_BUNDLE_BUNDLE_NAME "Plugin Analyser"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+    MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION}
+    MACOSX_BUNDLE_COPYRIGHT "Copyright © 2024"
+    OUTPUT_NAME "Plugin Analyser"
+    XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.pluginanalyser.app"
+    XCODE_ATTRIBUTE_LSMinimumSystemVersion "12.0"
 )
 
 # Also create console version for CLI usage
