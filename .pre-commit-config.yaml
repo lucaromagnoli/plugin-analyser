@@ -25,10 +25,17 @@ repos:
           - '-c'
           - |
             if command -v clang-format >/dev/null 2>&1; then
-              find src -type f \( -name "*.cpp" -o -name "*.h" \) -exec clang-format -i {} +
+              FILES=("$@")
+              MODIFIED=0
+              for file in "$${FILES[@]}"; do
+                if ! clang-format "$$file" | diff -q "$$file" - >/dev/null 2>&1; then
+                  clang-format -i "$$file"
+                  MODIFIED=1
+                fi
+              done
+              exit $$MODIFIED
             else
               echo "Warning: clang-format not found, skipping formatting"
+              exit 0
             fi
-        pass_filenames: false
-        always_run: false
-
+        pass_filenames: true
