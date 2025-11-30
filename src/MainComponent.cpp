@@ -171,19 +171,44 @@ void MainComponent::paintListBoxItem(int rowNumber, juce::Graphics& g, int width
     if (rowNumber < 0 || rowNumber >= (int)availableParameters.size())
         return;
 
+    // Background
     if (rowIsSelected)
-        g.fillAll(juce::Colours::lightblue);
+        g.fillAll(juce::Colours::lightblue.withAlpha(0.3f));
     else
-        g.fillAll(rowNumber % 2 == 0 ? juce::Colours::white : juce::Colours::lightgrey);
+        g.fillAll(rowNumber % 2 == 0 ? juce::Colours::white : juce::Colours::lightgrey.withAlpha(0.5f));
 
+    // Draw checkbox
+    const int checkboxSize = 16;
+    const int checkboxX = 5;
+    const int checkboxY = (height - checkboxSize) / 2;
+    juce::Rectangle<int> checkboxBounds(checkboxX, checkboxY, checkboxSize, checkboxSize);
+
+    bool isChecked = rowNumber < (int)selectedParameters.size() && selectedParameters[rowNumber];
+
+    // Checkbox border
+    g.setColour(juce::Colours::darkgrey);
+    g.drawRect(checkboxBounds, 1);
+
+    // Checkbox fill if checked
+    if (isChecked) {
+        g.setColour(juce::Colours::blue);
+        g.fillRect(checkboxBounds.reduced(2));
+
+        // Draw checkmark
+        g.setColour(juce::Colours::white);
+        juce::Path checkmark;
+        checkmark.addLineSegment({checkboxX + 4.0f, checkboxY + checkboxSize / 2.0f,
+                                  checkboxX + checkboxSize / 2.0f - 1.0f, checkboxY + checkboxSize - 4.0f}, 2.0f);
+        checkmark.addLineSegment({checkboxX + checkboxSize / 2.0f - 1.0f, checkboxY + checkboxSize - 4.0f,
+                                  checkboxX + checkboxSize - 4.0f, checkboxY + 4.0f}, 2.0f);
+        g.strokePath(checkmark, juce::PathStrokeType(2.0f));
+    }
+
+    // Parameter name
     g.setColour(juce::Colours::black);
     g.setFont(14.0f);
-
-    juce::String text = availableParameters[rowNumber];
-    if (rowNumber < (int)selectedParameters.size() && selectedParameters[rowNumber])
-        text = "✓ " + text;
-
-    g.drawText(text, 5, 0, width - 5, height, juce::Justification::centredLeft);
+    g.drawText(availableParameters[rowNumber], checkboxX + checkboxSize + 8, 0, width - checkboxX - checkboxSize - 8, height,
+               juce::Justification::centredLeft);
 }
 
 void MainComponent::listBoxItemClicked(int row, const juce::MouseEvent& e) {
