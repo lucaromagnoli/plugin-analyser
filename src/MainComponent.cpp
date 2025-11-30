@@ -438,7 +438,8 @@ void MainComponent::runMeasurement() {
 
                 juce::MessageManager::callAsync([this, runs, timeEstimate]() {
                     progressLabel.setText("WARNING: " + juce::String(runs.size()) + " runs (~" + timeEstimate +
-                                          ") - Consider reducing parameters/buckets!", juce::dontSendNotification);
+                                              ") - Consider reducing parameters/buckets!",
+                                          juce::dontSendNotification);
                 });
                 std::this_thread::sleep_for(std::chrono::seconds(3)); // Give user time to see warning
             }
@@ -460,39 +461,40 @@ void MainComponent::runMeasurement() {
 
             // Pass progress callback to update UI with time estimate
             auto startTime = std::chrono::steady_clock::now();
-            runMeasurementGrid(*measurementPlugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers,
-                               config, outDir, [this, runs, startTime](int runIndex) {
-                                   double progress = (double)(runIndex + 1) / (double)runs.size();
-                                   auto currentTime = std::chrono::steady_clock::now();
-                                   auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
+            runMeasurementGrid(
+                *measurementPlugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers, config, outDir,
+                [this, runs, startTime](int runIndex) {
+                    double progress = (double)(runIndex + 1) / (double)runs.size();
+                    auto currentTime = std::chrono::steady_clock::now();
+                    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
 
-                                   juce::String statusText = "Run " + juce::String(runIndex + 1) + " / " + juce::String(runs.size());
+                    juce::String statusText = "Run " + juce::String(runIndex + 1) + " / " + juce::String(runs.size());
 
-                                   // Estimate remaining time
-                                   if (runIndex > 0 && elapsed > 0) {
-                                       double runsPerSecond = (double)(runIndex + 1) / (double)elapsed;
-                                       int remainingRuns = runs.size() - (runIndex + 1);
-                                       int estimatedSecondsRemaining = (int)(remainingRuns / runsPerSecond);
+                    // Estimate remaining time
+                    if (runIndex > 0 && elapsed > 0) {
+                        double runsPerSecond = (double)(runIndex + 1) / (double)elapsed;
+                        int remainingRuns = runs.size() - (runIndex + 1);
+                        int estimatedSecondsRemaining = (int)(remainingRuns / runsPerSecond);
 
-                                       int hours = estimatedSecondsRemaining / 3600;
-                                       int minutes = (estimatedSecondsRemaining % 3600) / 60;
-                                       int seconds = estimatedSecondsRemaining % 60;
+                        int hours = estimatedSecondsRemaining / 3600;
+                        int minutes = (estimatedSecondsRemaining % 3600) / 60;
+                        int seconds = estimatedSecondsRemaining % 60;
 
-                                       if (hours > 0) {
-                                           statusText += " (~" + juce::String(hours) + "h " + juce::String(minutes) + "m remaining)";
-                                       } else if (minutes > 0) {
-                                           statusText += " (~" + juce::String(minutes) + "m " + juce::String(seconds) + "s remaining)";
-                                       } else {
-                                           statusText += " (~" + juce::String(seconds) + "s remaining)";
-                                       }
-                                   }
+                        if (hours > 0) {
+                            statusText += " (~" + juce::String(hours) + "h " + juce::String(minutes) + "m remaining)";
+                        } else if (minutes > 0) {
+                            statusText += " (~" + juce::String(minutes) + "m " + juce::String(seconds) + "s remaining)";
+                        } else {
+                            statusText += " (~" + juce::String(seconds) + "s remaining)";
+                        }
+                    }
 
-                                   juce::MessageManager::callAsync([this, statusText, progress]() {
-                                       progressLabel.setText(statusText, juce::dontSendNotification);
-                                       this->progress = progress;
-                                       progressBar.repaint();
-                                   });
-                               });
+                    juce::MessageManager::callAsync([this, statusText, progress]() {
+                        progressLabel.setText(statusText, juce::dontSendNotification);
+                        this->progress = progress;
+                        progressBar.repaint();
+                    });
+                });
             std::cerr << "[Measurement] Measurement grid complete" << std::endl;
 
             // Finish analyzers
