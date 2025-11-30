@@ -87,7 +87,7 @@ set_target_properties(PluginAnalyser PROPERTIES
 )
 
 # Also create console version for CLI usage
-add_executable(plugin_measure_grid_cli src/main.cpp
+add_executable(plugin_measure_grid_cli src/main_cli.cpp
     src/Config.cpp src/Config.h
     src/PluginLoader.cpp src/PluginLoader.h
     src/SignalGenerator.cpp src/SignalGenerator.h
