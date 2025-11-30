@@ -1,4 +1,6 @@
 build/
+build-debug/
+build-release/
 cmake-build-*/
 *.user
 *.suo
@@ -31,4 +33,3 @@ compile_commands.json
 *.csv
 output/
 test_output/
-
