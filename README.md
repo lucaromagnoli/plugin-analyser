@@ -30,6 +30,7 @@ Available as both a **GUI application** and a **command-line tool**.
 ### Prerequisites
 
 - CMake 3.22+
+- Ninja build system
 - C++17 compatible compiler
 - JUCE 8.0+ (automatically fetched via CMake)
 
@@ -48,9 +49,11 @@ make clean            # Clean build directories
 
 ```bash
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build . --parallel
 ```
+
+**Note**: The Makefile uses Ninja by default for faster builds. If you prefer a different generator, you can modify the Makefile or use CMake directly with `-G <generator>`.
 
 Two executables will be built:
 - `PluginAnalyser` - GUI application (recommended)
