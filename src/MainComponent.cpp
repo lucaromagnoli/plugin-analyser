@@ -26,6 +26,8 @@ MainComponent::MainComponent()
     // Parameter list
     addAndMakeVisible(parametersLabel);
     parameterListBox.setModel(this);
+    parameterListBox.setRowSelectedOnMouseDown(false); // Disable row selection - we handle clicks ourselves
+    parameterListBox.setMultipleSelectionEnabled(false);
     addAndMakeVisible(parameterListBox);
 
     selectAllButton.setButtonText("Select All");
@@ -149,11 +151,15 @@ void MainComponent::buttonClicked(juce::Button* button) {
     } else if (button == &loadPluginButton) {
         loadPlugin();
     } else if (button == &selectAllButton) {
+        selectedParameters.resize(availableParameters.size(), true);
         std::fill(selectedParameters.begin(), selectedParameters.end(), true);
         parameterListBox.updateContent();
+        updateParameterList();
     } else if (button == &deselectAllButton) {
+        selectedParameters.resize(availableParameters.size(), false);
         std::fill(selectedParameters.begin(), selectedParameters.end(), false);
         parameterListBox.updateContent();
+        updateParameterList();
     } else if (button == &runMeasurementButton) {
         runMeasurement();
     }
@@ -171,11 +177,8 @@ void MainComponent::paintListBoxItem(int rowNumber, juce::Graphics& g, int width
     if (rowNumber < 0 || rowNumber >= (int)availableParameters.size())
         return;
 
-    // Background
-    if (rowIsSelected)
-        g.fillAll(juce::Colours::lightblue.withAlpha(0.3f));
-    else
-        g.fillAll(rowNumber % 2 == 0 ? juce::Colours::white : juce::Colours::lightgrey.withAlpha(0.5f));
+    // Background - use subtle alternating colors, ignore rowIsSelected since we disabled selection
+    g.fillAll(rowNumber % 2 == 0 ? juce::Colours::white : juce::Colours::lightgrey.withAlpha(0.3f));
 
     // Draw checkbox
     const int checkboxSize = 18;
@@ -218,7 +221,18 @@ void MainComponent::paintListBoxItem(int rowNumber, juce::Graphics& g, int width
 }
 
 void MainComponent::listBoxItemClicked(int row, const juce::MouseEvent& e) {
-    if (row >= 0 && row < (int)selectedParameters.size()) {
+    // Ensure selectedParameters is the right size
+    if (selectedParameters.size() != availableParameters.size()) {
+        selectedParameters.resize(availableParameters.size(), false);
+    }
+
+    // Only toggle if clicking within the checkbox area or the row itself
+    // This prevents accidental toggles when clicking elsewhere
+    const int checkboxArea = 30; // Approximate checkbox area width
+
+    // Toggle if clicking in the left part of the row (where checkbox is) or anywhere on the row
+    if (row >= 0 && row < (int)selectedParameters.size() && row < (int)availableParameters.size()) {
+        // Always toggle on row click - the checkbox visual will update
         selectedParameters[row] = !selectedParameters[row];
         parameterListBox.updateContent();
         updateParameterList();
