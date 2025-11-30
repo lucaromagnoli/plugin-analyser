@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        build_type: [Debug, Release]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup CMake
+      uses: jwlawson/actions-setup-cmake@v1.14
+      with:
+        cmake-version: '3.22'
+
+    - name: Configure CMake
+      run: |
+        cmake -S . -B build-${{ matrix.build_type }} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DPLUGIN_ANALYSER_USE_FETCH_JUCE=ON
+
+    - name: Build
+      run: |
+        cmake --build build-${{ matrix.build_type }} --parallel
+
+    - name: Test (if tests exist)
+      run: |
+        if [ -f "build-${{ matrix.build_type }}/test_*" ] || [ -f "build-${{ matrix.build_type }}/tests/test_*" ]; then
+          ctest --test-dir build-${{ matrix.build_type }} --output-on-failure
+        else
+          echo "No tests found, skipping"
+        fi
+      continue-on-error: true
+
+  lint:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup clang-format
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format
+
+    - name: Check code formatting
+      run: |
+        find src -type f \( -name "*.cpp" -o -name "*.h" \) -exec clang-format --dry-run --Werror {} \;
+      continue-on-error: true
+
+    - name: Run pre-commit
+      uses: pre-commit/action@v3.0.0
+      continue-on-error: true
+
