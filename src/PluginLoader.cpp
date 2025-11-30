@@ -9,7 +9,7 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
     }
 
     juce::AudioPluginFormatManager formatManager;
-    formatManager.addFormat(new juce::VST3PluginFormat());
+    formatManager.addDefaultFormats();
 
     juce::String errorMessage;
     juce::PluginDescription description;
@@ -47,11 +47,7 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
 std::map<juce::String, juce::AudioProcessorParameter*> buildParameterMap(juce::AudioPluginInstance& plugin) {
     std::map<juce::String, juce::AudioProcessorParameter*> paramMap;
 
-    auto* processor = plugin.getAudioProcessor();
-    if (processor == nullptr)
-        return paramMap;
-
-    for (auto* param : processor->getParameters()) {
+    for (auto* param : plugin.getParameters()) {
         if (param == nullptr)
             continue;
 

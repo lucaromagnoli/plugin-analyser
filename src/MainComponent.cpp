@@ -6,7 +6,7 @@
 MainComponent::MainComponent()
     : pluginPathLabel("Plugin Path:", "Plugin Path:"), pluginInfoLabel("", "No plugin loaded"),
       parametersLabel("Parameters:", "Parameters:"), outputPathLabel("Output Path:", "Output Path:"),
-      progressLabel("", "Ready") {
+      progressLabel("", "Ready"), progressBar(progress) {
     // Plugin path section
     addAndMakeVisible(pluginPathLabel);
     pluginPathEditor.setText("/absolute/path/to/plugin.vst3", juce::dontSendNotification);
@@ -131,9 +131,12 @@ void MainComponent::resized() {
 void MainComponent::buttonClicked(juce::Button* button) {
     if (button == &browseButton) {
         juce::FileChooser chooser("Select VST3 Plugin", juce::File(), "*.vst3");
-        if (chooser.browseForFileToOpen()) {
-            pluginPathEditor.setText(chooser.getResult().getFullPathName(), juce::dontSendNotification);
-        }
+        auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+        chooser.launchAsync(chooserFlags, [this](const juce::FileChooser& fc) {
+            if (fc.getResults().size() > 0) {
+                pluginPathEditor.setText(fc.getResult().getFullPathName(), juce::dontSendNotification);
+            }
+        });
     } else if (button == &browseOutputButton) {
         juce::FileChooser chooser("Select Output Directory", juce::File(outputPathEditor.getText()));
         if (chooser.browseForDirectory()) {
@@ -317,7 +320,7 @@ void MainComponent::runMeasurement() {
             auto analyzers = createAnalyzers(config, outDir, paramNames);
 
             // Run measurements
-            int64 totalSamples = (int64)(config.seconds * config.sampleRate);
+            int64_t totalSamples = (int64_t)(config.seconds * config.sampleRate);
             runMeasurementGrid(*pluginInstance, config.sampleRate, config.blockSize, totalSamples, runs, analyzers,
                                config, outDir);
 

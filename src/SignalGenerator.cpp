@@ -39,7 +39,7 @@ void SweepGenerator::reset() {
 }
 
 void SweepGenerator::fillBlock(juce::AudioBuffer<float>& buffer, int numSamples) {
-    const int64 totalSamples = (int64)(duration * sampleRate);
+    const int64_t totalSamples = (int64_t)(duration * sampleRate);
     const double logStart = std::log(startHz);
     const double logEnd = std::log(endHz);
 

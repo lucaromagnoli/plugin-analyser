@@ -93,7 +93,7 @@ std::vector<std::unique_ptr<Analyzer>> createAnalyzers(const Config& config, con
     return analyzers;
 }
 
-void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, int blockSize, int64 totalSamples,
+void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, int blockSize, int64_t totalSamples,
                         const std::vector<RunConfig>& runs, const std::vector<std::unique_ptr<Analyzer>>& analyzers,
                         const Config& config, const juce::File& outDir) {
     auto paramMap = buildParameterMap(plugin);
@@ -143,9 +143,9 @@ void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, in
         }
 
         // Process samples
-        int64 currentSample = 0;
+        int64_t currentSample = 0;
         while (currentSample < totalSamples) {
-            int numThisBlock = (int)std::min((int64)blockSize, totalSamples - currentSample);
+            int numThisBlock = (int)std::min((int64_t)blockSize, totalSamples - currentSample);
 
             // Clear buffers
             inputBuffer.clear();

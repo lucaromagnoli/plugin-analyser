@@ -31,7 +31,7 @@ void RawCsvAnalyzer::processBlock(const BlockContext& ctx) {
     }
 
     for (int i = 0; i < ctx.numSamples; ++i) {
-        int64 sampleIndex = ctx.firstSample + i;
+        int64_t sampleIndex = ctx.firstSample + i;
         double timeSec = (double)sampleIndex / ctx.sampleRate;
 
         *csvFile << ctx.runId << "," << sampleIndex << "," << timeSec << "," << ctx.inL[i];

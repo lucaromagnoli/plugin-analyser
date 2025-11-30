@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Config.h"
+#include "JuceHeader.h"
 #include "MeasurementEngine.h"
 #include "PluginLoader.h"
-#include <JuceHeader.h>
 #include <memory>
 #include <vector>
 

@@ -30,18 +30,18 @@ help:
 build: build-debug
 
 build-debug:
-	@echo "🔨 Configuring CMake (Debug)..."
+	@echo "🔨 Configuring CMake (Debug) with Ninja..."
 	@mkdir -p $(BUILD_DEBUG)
-	@cmake -S . -B $(BUILD_DEBUG) -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	@cmake -S . -B $(BUILD_DEBUG) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 	@echo "🔨 Building (Debug)..."
 	@cmake --build $(BUILD_DEBUG) --parallel
 	@echo "✅ Build complete! Executables in $(BUILD_DEBUG)/"
 
 # Build Release
 build-release:
-	@echo "🔨 Configuring CMake (Release)..."
+	@echo "🔨 Configuring CMake (Release) with Ninja..."
 	@mkdir -p $(BUILD_RELEASE)
-	@cmake -S . -B $(BUILD_RELEASE) -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	@cmake -S . -B $(BUILD_RELEASE) -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 	@echo "🔨 Building (Release)..."
 	@cmake --build $(BUILD_RELEASE) --parallel
 	@echo "✅ Build complete! Executables in $(BUILD_RELEASE)/"

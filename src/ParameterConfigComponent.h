@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Config.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 
 class ParameterConfigComponent : public juce::Component,
                                  public juce::ComboBox::Listener,

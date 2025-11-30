@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Analyzer.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 #include <map>
 #include <vector>
 

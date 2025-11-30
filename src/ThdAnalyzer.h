@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Analyzer.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 #include <complex>
 #include <map>
 #include <vector>
@@ -17,7 +17,7 @@ struct ThdAnalyzer : public Analyzer {
 private:
     struct RunThdData {
         std::vector<float> buffer;
-        std::vector<std::pair<int64, double>> thdResults; // (centreSample, thd)
+        std::vector<std::pair<int64_t, double>> thdResults; // (centreSample, thd)
         std::map<juce::String, float> paramValues;
         float inputGainDb;
         double sampleRate = 48000.0;
@@ -29,7 +29,7 @@ private:
     std::vector<juce::String> paramNames;
     juce::File outputDir;
 
-    void processFFTWindow(RunThdData& data, int64 centreSample);
+    void processFFTWindow(RunThdData& data, int64_t centreSample);
     void applyHannWindow(std::vector<float>& buffer);
     double computeTHD(const std::vector<std::complex<float>>& fftResult, double sampleRate);
 };
