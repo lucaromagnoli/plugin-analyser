@@ -178,36 +178,42 @@ void MainComponent::paintListBoxItem(int rowNumber, juce::Graphics& g, int width
         g.fillAll(rowNumber % 2 == 0 ? juce::Colours::white : juce::Colours::lightgrey.withAlpha(0.5f));
 
     // Draw checkbox
-    const int checkboxSize = 16;
+    const int checkboxSize = 18;
     const int checkboxX = 5;
     const int checkboxY = (height - checkboxSize) / 2;
-    juce::Rectangle<int> checkboxBounds(checkboxX, checkboxY, checkboxSize, checkboxSize);
+    juce::Rectangle<float> checkboxBounds((float)checkboxX, (float)checkboxY, (float)checkboxSize, (float)checkboxSize);
 
     bool isChecked = rowNumber < (int)selectedParameters.size() && selectedParameters[rowNumber];
 
-    // Checkbox border
+    // Draw checkbox border
     g.setColour(juce::Colours::darkgrey);
-    g.drawRect(checkboxBounds, 1);
+    g.drawRect(checkboxBounds, 1.5f);
 
-    // Checkbox fill if checked
+    // Draw checkbox fill if checked
     if (isChecked) {
         g.setColour(juce::Colours::blue);
-        g.fillRect(checkboxBounds.reduced(2));
+        g.fillRect(checkboxBounds.reduced(2.0f));
 
-        // Draw checkmark
+        // Draw checkmark using a simple path
         g.setColour(juce::Colours::white);
         juce::Path checkmark;
-        checkmark.addLineSegment({checkboxX + 4.0f, checkboxY + checkboxSize / 2.0f,
-                                  checkboxX + checkboxSize / 2.0f - 1.0f, checkboxY + checkboxSize - 4.0f}, 2.0f);
-        checkmark.addLineSegment({checkboxX + checkboxSize / 2.0f - 1.0f, checkboxY + checkboxSize - 4.0f,
-                                  checkboxX + checkboxSize - 4.0f, checkboxY + 4.0f}, 2.0f);
-        g.strokePath(checkmark, juce::PathStrokeType(2.0f));
+        const float x = checkboxBounds.getX();
+        const float y = checkboxBounds.getY();
+        const float w = checkboxBounds.getWidth();
+        const float h = checkboxBounds.getHeight();
+
+        // Draw checkmark as two connected lines
+        checkmark.startNewSubPath(x + w * 0.2f, y + h * 0.5f);
+        checkmark.lineTo(x + w * 0.45f, y + h * 0.75f);
+        checkmark.lineTo(x + w * 0.8f, y + h * 0.25f);
+
+        g.strokePath(checkmark, juce::PathStrokeType(2.5f, juce::PathStrokeType::curved));
     }
 
     // Parameter name
     g.setColour(juce::Colours::black);
     g.setFont(14.0f);
-    g.drawText(availableParameters[rowNumber], checkboxX + checkboxSize + 8, 0, width - checkboxX - checkboxSize - 8, height,
+    g.drawText(availableParameters[rowNumber], checkboxX + checkboxSize + 10, 0, width - checkboxX - checkboxSize - 10, height,
                juce::Justification::centredLeft);
 }
 
