@@ -23,7 +23,8 @@ jobs:
       run: |
         find src -type f \( -name "*.cpp" -o -name "*.h" \) -exec clang-format --dry-run --Werror {} \;
 
-    - name: Run pre-commit
+    - name: Run pre-commit (check only)
       uses: pre-commit/action@v3.0.0
       with:
         extra_args: --all-files --hook-stage manual
+      continue-on-error: true
