@@ -112,4 +112,3 @@ run-cli: build-release
 	else \
 		echo "⚠️  example_config.json not found. Create a config file first."; \
 	fi
-

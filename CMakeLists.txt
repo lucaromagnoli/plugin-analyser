@@ -130,4 +130,3 @@ target_link_libraries(plugin_measure_grid_cli
 
 # For JSON parsing, we'll use JUCE's JSON class or add nlohmann/json
 # JUCE has built-in JSON support via juce::var and juce::JSON
-

@@ -35,4 +35,3 @@ After building, test with:
 ```
 
 Make sure to update the `pluginPath` in `example_config.json` to point to an actual VST3 plugin.
-
