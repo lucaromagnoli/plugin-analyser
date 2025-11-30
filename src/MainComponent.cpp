@@ -138,7 +138,8 @@ void MainComponent::buttonClicked(juce::Button* button) {
             }
         });
     } else if (button == &browseOutputButton) {
-        auto chooser = std::make_shared<juce::FileChooser>("Select Output Directory", juce::File(outputPathEditor.getText()));
+        auto chooser =
+            std::make_shared<juce::FileChooser>("Select Output Directory", juce::File(outputPathEditor.getText()));
         auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories;
         chooser->launchAsync(chooserFlags, [this, chooser](const juce::FileChooser& fc) {
             if (fc.getResults().size() > 0) {
@@ -213,10 +214,11 @@ void MainComponent::loadPlugin() {
     Config tempConfig;
     measurementConfig->fillConfig(tempConfig);
 
-    pluginInstance = loadPluginInstance(pluginFile, tempConfig.sampleRate, tempConfig.blockSize);
+    juce::String errorMessage;
+    pluginInstance = loadPluginInstance(pluginFile, tempConfig.sampleRate, tempConfig.blockSize, errorMessage);
 
     if (pluginInstance == nullptr) {
-        showError("Failed to load plugin");
+        showError(errorMessage.isEmpty() ? "Failed to load plugin" : errorMessage);
         return;
     }
 

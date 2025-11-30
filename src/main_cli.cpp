@@ -82,10 +82,12 @@ int main(int argc, char* argv[]) {
 
         // Load plugin
         std::cout << "Loading plugin: " << config.pluginPath << std::endl;
-        auto plugin = loadPluginInstance(juce::File(config.pluginPath), config.sampleRate, config.blockSize);
+        juce::String errorMessage;
+        auto plugin =
+            loadPluginInstance(juce::File(config.pluginPath), config.sampleRate, config.blockSize, errorMessage);
 
         if (plugin == nullptr) {
-            std::cerr << "Failed to load plugin" << std::endl;
+            std::cerr << (errorMessage.isEmpty() ? "Failed to load plugin" : errorMessage.toStdString()) << std::endl;
             return 1;
         }
 

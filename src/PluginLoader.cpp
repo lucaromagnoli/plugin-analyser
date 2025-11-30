@@ -2,10 +2,13 @@
 #include <iostream>
 
 std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& pluginFile, double sampleRate,
-                                                              int blockSize) {
+                                                              int blockSize, juce::String& errorMessageOut) {
+    errorMessageOut.clear();
+
     // VST3 plugins on macOS are bundles (directories), not files
     if (!pluginFile.exists()) {
-        std::cerr << "Plugin file does not exist: " << pluginFile.getFullPathName() << std::endl;
+        errorMessageOut = "Plugin file does not exist: " + pluginFile.getFullPathName();
+        std::cerr << errorMessageOut << std::endl;
         return nullptr;
     }
 
@@ -16,9 +19,11 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
     juce::PluginDescription description;
 
     // Try to find the plugin by scanning
+    bool foundFormat = false;
     for (int i = 0; i < formatManager.getNumFormats(); ++i) {
         auto* format = formatManager.getFormat(i);
         if (format->fileMightContainThisPluginType(pluginFile.getFullPathName())) {
+            foundFormat = true;
             juce::OwnedArray<juce::PluginDescription> found;
             format->findAllTypesForFile(found, pluginFile.getFullPathName());
             if (found.size() > 0) {
@@ -28,15 +33,25 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
         }
     }
 
+    if (!foundFormat) {
+        errorMessageOut = "No plugin format recognized for: " + pluginFile.getFullPathName() +
+                         "\nMake sure the file is a valid VST3 plugin.";
+        std::cerr << errorMessageOut << std::endl;
+        return nullptr;
+    }
+
     if (description.name.isEmpty()) {
-        std::cerr << "Failed to get plugin description for: " << pluginFile.getFullPathName() << std::endl;
+        errorMessageOut = "Failed to get plugin description for: " + pluginFile.getFullPathName() +
+                         "\nThe file may be corrupted or not a valid plugin.";
+        std::cerr << errorMessageOut << std::endl;
         return nullptr;
     }
 
     auto instance = formatManager.createPluginInstance(description, sampleRate, blockSize, errorMessage);
 
     if (instance == nullptr) {
-        std::cerr << "Failed to create plugin instance: " << errorMessage << std::endl;
+        errorMessageOut = "Failed to create plugin instance: " + errorMessage;
+        std::cerr << errorMessageOut << std::endl;
         return nullptr;
     }
 

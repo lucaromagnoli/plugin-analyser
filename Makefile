@@ -45,6 +45,8 @@ build-release:
 	@echo "🔨 Building (Release)..."
 	@cmake --build $(BUILD_RELEASE) --parallel
 	@echo "✅ Build complete! Executables in $(BUILD_RELEASE)/"
+	@echo "📍 GUI app: $(BUILD_RELEASE)/PluginAnalyser"
+	@echo "📍 CLI tool: $(BUILD_RELEASE)/plugin_measure_grid_cli"
 
 # Clean build directories
 clean:
@@ -97,10 +99,15 @@ install:
 
 # Run GUI application
 run-gui: build-release
-	@echo "🚀 Running GUI application..."
-	@$(BUILD_RELEASE)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser 2>/dev/null || \
-	 $(BUILD_RELEASE)/PluginAnalyser 2>/dev/null || \
-	 echo "⚠️  Executable not found. Check build output."
+	@echo "🚀 Launching GUI application..."
+	@if [ -f $(BUILD_RELEASE)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser ]; then \
+		open $(BUILD_RELEASE)/PluginAnalyser.app; \
+	elif [ -f $(BUILD_RELEASE)/PluginAnalyser ]; then \
+		$(BUILD_RELEASE)/PluginAnalyser & \
+		echo "✅ App launched: $(BUILD_RELEASE)/PluginAnalyser"; \
+	else \
+		echo "⚠️  Executable not found. Check build output."; \
+	fi
 
 # Run CLI tool (example)
 run-cli: build-release

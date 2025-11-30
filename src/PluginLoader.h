@@ -5,7 +5,7 @@
 #include <memory>
 
 std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& pluginFile, double sampleRate,
-                                                              int blockSize);
+                                                              int blockSize, juce::String& errorMessageOut);
 
 std::map<juce::String, juce::AudioProcessorParameter*> buildParameterMap(juce::AudioPluginInstance& plugin);
 
