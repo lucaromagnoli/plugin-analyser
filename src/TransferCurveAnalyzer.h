@@ -6,7 +6,8 @@
 #include <vector>
 
 struct TransferCurveAnalyzer : public Analyzer {
-    TransferCurveAnalyzer(const juce::File& outDir, int numBins, const std::vector<juce::String>& paramNames);
+    TransferCurveAnalyzer(const juce::File& outDir, int numBins, const std::vector<juce::String>& paramNames,
+                          const juce::String& signalType);
     ~TransferCurveAnalyzer() override;
 
     void processBlock(const BlockContext& ctx) override;
@@ -28,10 +29,12 @@ private:
     int numBins;
     std::vector<juce::String> paramNames;
     juce::File outputDir;
+    juce::String signalType;
 
     int getBinIndex(float x) const;
     float getBinCenter(int binIndex) const;
 };
 
 std::unique_ptr<Analyzer> createTransferCurveAnalyzer(const juce::File& outDir, int numBins,
-                                                      const std::vector<juce::String>& paramNames);
+                                                      const std::vector<juce::String>& paramNames,
+                                                      const juce::String& signalType);

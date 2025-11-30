@@ -5,8 +5,9 @@
 #include <iostream>
 
 LinearResponseAnalyzer::LinearResponseAnalyzer(const juce::File& outDir, int fftSize,
-                                               const std::vector<juce::String>& paramNames)
-    : fftSize(fftSize), paramNames(paramNames), outputDir(outDir) {}
+                                               const std::vector<juce::String>& paramNames,
+                                               const juce::String& signalType)
+    : fftSize(fftSize), paramNames(paramNames), outputDir(outDir), signalType(signalType) {}
 
 LinearResponseAnalyzer::~LinearResponseAnalyzer() {}
 
@@ -84,11 +85,12 @@ void LinearResponseAnalyzer::processBlock(const BlockContext& ctx) {
 }
 
 void LinearResponseAnalyzer::finish(const juce::File& outDir) {
-    juce::File csvFile = outDir.getChildFile("grid_linear_response.csv");
+    juce::String filename = "grid_linear_response_" + signalType.toLowerCase() + ".csv";
+    juce::File csvFile = outDir.getChildFile(filename);
     std::ofstream out(csvFile.getFullPathName().toStdString());
 
     if (!out.is_open()) {
-        std::cerr << "Failed to open grid_linear_response.csv for writing" << std::endl;
+        std::cerr << "Failed to open " << filename.toStdString() << " for writing" << std::endl;
         return;
     }
 
@@ -135,6 +137,7 @@ void LinearResponseAnalyzer::finish(const juce::File& outDir) {
 }
 
 std::unique_ptr<Analyzer> createLinearResponseAnalyzer(const juce::File& outDir, int fftSize,
-                                                       const std::vector<juce::String>& paramNames) {
-    return std::make_unique<LinearResponseAnalyzer>(outDir, fftSize, paramNames);
+                                                       const std::vector<juce::String>& paramNames,
+                                                       const juce::String& signalType) {
+    return std::make_unique<LinearResponseAnalyzer>(outDir, fftSize, paramNames, signalType);
 }
