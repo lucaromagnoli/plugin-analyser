@@ -1,30 +1,25 @@
 #include "RawCsvAnalyzer.h"
 #include <iostream>
 
-RawCsvAnalyzer::RawCsvAnalyzer(const juce::File& outDir)
-{
+RawCsvAnalyzer::RawCsvAnalyzer(const juce::File& outDir) {
     juce::File csvFile = outDir.getChildFile("raw.csv");
     this->csvFile = std::make_unique<std::ofstream>(csvFile.getFullPathName().toStdString());
-    if (!this->csvFile->is_open())
-    {
+    if (!this->csvFile->is_open()) {
         std::cerr << "Failed to open raw.csv for writing" << std::endl;
         this->csvFile.reset();
     }
 }
 
-RawCsvAnalyzer::~RawCsvAnalyzer()
-{
+RawCsvAnalyzer::~RawCsvAnalyzer() {
     if (csvFile && csvFile->is_open())
         csvFile->close();
 }
 
-void RawCsvAnalyzer::processBlock(const BlockContext& ctx)
-{
+void RawCsvAnalyzer::processBlock(const BlockContext& ctx) {
     if (!csvFile)
         return;
-    
-    if (!headerWritten)
-    {
+
+    if (!headerWritten) {
         *csvFile << "runId,sample,time_sec,inL";
         if (ctx.inR != nullptr)
             *csvFile << ",inR";
@@ -34,12 +29,11 @@ void RawCsvAnalyzer::processBlock(const BlockContext& ctx)
         *csvFile << "\n";
         headerWritten = true;
     }
-    
-    for (int i = 0; i < ctx.numSamples; ++i)
-    {
+
+    for (int i = 0; i < ctx.numSamples; ++i) {
         int64 sampleIndex = ctx.firstSample + i;
         double timeSec = (double)sampleIndex / ctx.sampleRate;
-        
+
         *csvFile << ctx.runId << "," << sampleIndex << "," << timeSec << "," << ctx.inL[i];
         if (ctx.inR != nullptr)
             *csvFile << "," << ctx.inR[i];
@@ -50,17 +44,13 @@ void RawCsvAnalyzer::processBlock(const BlockContext& ctx)
     }
 }
 
-void RawCsvAnalyzer::finish(const juce::File& outDir)
-{
-    if (csvFile && csvFile->is_open())
-    {
+void RawCsvAnalyzer::finish(const juce::File& outDir) {
+    if (csvFile && csvFile->is_open()) {
         csvFile->close();
         csvFile.reset();
     }
 }
 
-std::unique_ptr<Analyzer> createRawCsvAnalyzer(const juce::File& outDir)
-{
+std::unique_ptr<Analyzer> createRawCsvAnalyzer(const juce::File& outDir) {
     return std::make_unique<RawCsvAnalyzer>(outDir);
 }
-

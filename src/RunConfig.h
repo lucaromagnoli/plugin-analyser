@@ -3,10 +3,8 @@
 #include <JuceHeader.h>
 #include <map>
 
-struct RunConfig
-{
+struct RunConfig {
     int runId;
-    std::map<juce::String, float> paramValues;  // paramName -> normalized [0,1] value
+    std::map<juce::String, float> paramValues; // paramName -> normalized [0,1] value
     float inputGainDb;
 };
-

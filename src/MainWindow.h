@@ -1,10 +1,9 @@
 #pragma once
 
-#include <JuceHeader.h>
 #include "MainComponent.h"
+#include <JuceHeader.h>
 
-class MainWindow : public juce::DocumentWindow
-{
+class MainWindow : public juce::DocumentWindow {
 public:
     MainWindow(juce::String name);
     ~MainWindow() override;
@@ -13,7 +12,6 @@ public:
 
 private:
     std::unique_ptr<MainComponent> mainComponent;
-    
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainWindow)
 };
-

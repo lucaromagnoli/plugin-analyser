@@ -5,8 +5,7 @@
 #include <map>
 #include <vector>
 
-struct RunStats
-{
+struct RunStats {
     double sumSqInL = 0.0;
     double sumSqInR = 0.0;
     double sumSqOutL = 0.0;
@@ -18,21 +17,19 @@ struct RunStats
     int64 sampleCount = 0;
 };
 
-struct RmsPeakAnalyzer : public Analyzer
-{
+struct RmsPeakAnalyzer : public Analyzer {
     RmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames);
     ~RmsPeakAnalyzer() override;
-    
+
     void processBlock(const BlockContext& ctx) override;
     void finish(const juce::File& outDir) override;
-    
+
 private:
     std::map<int, RunStats> perRunStats;
-    std::map<int, std::map<juce::String, float>> runParamValues;  // runId -> paramName -> value
-    std::map<int, float> runInputGainDb;  // runId -> inputGainDb
+    std::map<int, std::map<juce::String, float>> runParamValues; // runId -> paramName -> value
+    std::map<int, float> runInputGainDb;                         // runId -> inputGainDb
     std::vector<juce::String> paramNames;
     juce::File outputDir;
 };
 
 std::unique_ptr<Analyzer> createRmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames);
-
