@@ -115,19 +115,24 @@ run-gui: build-release
 		echo "⚠️  Executable not found. Check build output."; \
 	fi
 
-# Run GUI application (Debug)
+# Run GUI application (Debug) - runs directly to show console output
 run-gui-debug: build-debug
-	@echo "🚀 Launching GUI application (Debug)..."
-	@if [ -d "$(BUILD_DEBUG)/Plugin Analyser.app" ]; then \
-		open "$(BUILD_DEBUG)/Plugin Analyser.app"; \
-		echo "✅ App launched: $(BUILD_DEBUG)/Plugin Analyser.app"; \
-	elif [ -f $(BUILD_DEBUG)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser ]; then \
-		open $(BUILD_DEBUG)/PluginAnalyser.app; \
-	elif [ -f $(BUILD_DEBUG)/PluginAnalyser ]; then \
-		$(BUILD_DEBUG)/PluginAnalyser & \
-		echo "✅ App launched: $(BUILD_DEBUG)/PluginAnalyser"; \
+	@echo "🚀 Launching GUI application (Debug) with console output..."
+	@if [ -f "$(BUILD_DEBUG)/Plugin Analyser.app/Contents/MacOS/Plugin Analyser" ]; then \
+		echo "✅ Running: $(BUILD_DEBUG)/Plugin Analyser.app/Contents/MacOS/Plugin Analyser"; \
+		"$(BUILD_DEBUG)/Plugin Analyser.app/Contents/MacOS/Plugin Analyser"; \
+	elif [ -f "$(BUILD_DEBUG)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser" ]; then \
+		echo "✅ Running: $(BUILD_DEBUG)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser"; \
+		"$(BUILD_DEBUG)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser"; \
+	elif [ -f "$(BUILD_DEBUG)/PluginAnalyser" ]; then \
+		echo "✅ Running: $(BUILD_DEBUG)/PluginAnalyser"; \
+		"$(BUILD_DEBUG)/PluginAnalyser"; \
 	else \
 		echo "⚠️  Executable not found. Check build output."; \
+		echo "   Looking for:"; \
+		echo "   - $(BUILD_DEBUG)/Plugin Analyser.app/Contents/MacOS/Plugin Analyser"; \
+		echo "   - $(BUILD_DEBUG)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser"; \
+		echo "   - $(BUILD_DEBUG)/PluginAnalyser"; \
 	fi
 
 # Run CLI tool (example)
