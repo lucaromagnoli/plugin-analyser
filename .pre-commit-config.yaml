@@ -25,15 +25,16 @@ repos:
           - '-c'
           - |
             if command -v clang-format >/dev/null 2>&1; then
-              FILES=("$@")
               MODIFIED=0
-              for file in "$${FILES[@]}"; do
-                if ! clang-format "$$file" | diff -q "$$file" - >/dev/null 2>&1; then
-                  clang-format -i "$$file"
-                  MODIFIED=1
+              for file in "$@"; do
+                if [ -f "$file" ]; then
+                  if ! clang-format "$file" | diff -q "$file" - >/dev/null 2>&1; then
+                    clang-format -i "$file"
+                    MODIFIED=1
+                  fi
                 fi
               done
-              exit $$MODIFIED
+              exit $MODIFIED
             else
               echo "Warning: clang-format not found, skipping formatting"
               exit 0
