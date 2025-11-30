@@ -6,13 +6,9 @@
 [![CMake](https://img.shields.io/badge/CMake-3.22+-green.svg)](https://cmake.org/)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-lightgrey.svg)]()
 
-> 🎚️ A powerful C++ tool (JUCE-based) for **systematic grid-based sampling** of VST3 audio plugins across parameter combinations. Unlike Plugin Doctor's interactive analysis, this tool focuses on **automated batch measurement** of plugins at different settings, generating comprehensive datasets for analysis and modeling.
+> 🎚️ A powerful C++ tool (JUCE-based) for **systematic grid-based sampling** of VST3 audio plugins across parameter combinations. Unlike Plugin Doctor's interactive analysis, this tool focuses on **automated batch measurement** of plugins at different settings, generating comprehensive datasets for analysis.
 
-**Key Difference from Plugin Doctor**: While Plugin Doctor excels at interactive, real-time analysis of a plugin at specific settings, Plugin Analyser is designed for **systematic exploration** of the entire parameter space. It automatically tests all combinations of selected parameters and input levels, generating CSV datasets perfect for:
-- 📊 Statistical analysis
-- 🤖 Machine learning model training
-- 📈 Parameter space visualization
-- 🔬 Systematic plugin characterization
+**Key Difference from Plugin Doctor**: While Plugin Doctor excels at interactive, real-time analysis of a plugin at specific settings, Plugin Analyser is designed for **systematic exploration** of the entire parameter space. It automatically tests all combinations of selected parameters and input levels, generating CSV datasets that you can analyze however you need.
 
 Available as both a **GUI application** 🖥️ and a **command-line tool** 💻.
 
@@ -27,8 +23,7 @@ Available as both a **GUI application** 🖥️ and a **command-line tool** 💻
   - 🎵 Harmonic distortion / THD
   - 📐 Static transfer curve
   - 🔊 Static dynamics (input→output level)
-- 📁 Export data as CSV for Python analysis
-- 🤖 **Perfect for ML/AI**: Generate large datasets for training models or analyzing plugin behavior
+- 📁 Export data as CSV for analysis in any tool or language
 
 ## 🛠️ Building
 
