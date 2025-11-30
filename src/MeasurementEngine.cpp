@@ -160,8 +160,11 @@ void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, in
                 sweepGen->fillBlock(inputBuffer, numThisBlock);
             }
 
-            // Process through plugin
-            plugin.processBlock(inputBuffer, outputBuffer, midiBuffer);
+            // Copy input to output buffer (processBlock works in-place)
+            outputBuffer.makeCopyOf(inputBuffer);
+
+            // Process through plugin (modifies outputBuffer in-place)
+            plugin.processBlock(outputBuffer, midiBuffer);
 
             // Build BlockContext
             BlockContext ctx;

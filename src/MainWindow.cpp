@@ -12,10 +12,11 @@ MainWindow::MainWindow(juce::String name)
     setFullScreen(true);
 #else
     setResizable(true, true);
-    centreWithSize(getWidth(), getHeight());
+    centreWithSize(1200, 800);
 #endif
 
     setVisible(true);
+    toFront(true);
 }
 
 MainWindow::~MainWindow() {}

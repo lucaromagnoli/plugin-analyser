@@ -130,18 +130,21 @@ void MainComponent::resized() {
 
 void MainComponent::buttonClicked(juce::Button* button) {
     if (button == &browseButton) {
-        juce::FileChooser chooser("Select VST3 Plugin", juce::File(), "*.vst3");
+        auto chooser = std::make_shared<juce::FileChooser>("Select VST3 Plugin", juce::File(), "*.vst3");
         auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
-        chooser.launchAsync(chooserFlags, [this](const juce::FileChooser& fc) {
+        chooser->launchAsync(chooserFlags, [this, chooser](const juce::FileChooser& fc) {
             if (fc.getResults().size() > 0) {
                 pluginPathEditor.setText(fc.getResult().getFullPathName(), juce::dontSendNotification);
             }
         });
     } else if (button == &browseOutputButton) {
-        juce::FileChooser chooser("Select Output Directory", juce::File(outputPathEditor.getText()));
-        if (chooser.browseForDirectory()) {
-            outputPathEditor.setText(chooser.getResult().getFullPathName(), juce::dontSendNotification);
-        }
+        auto chooser = std::make_shared<juce::FileChooser>("Select Output Directory", juce::File(outputPathEditor.getText()));
+        auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories;
+        chooser->launchAsync(chooserFlags, [this, chooser](const juce::FileChooser& fc) {
+            if (fc.getResults().size() > 0) {
+                outputPathEditor.setText(fc.getResult().getFullPathName(), juce::dontSendNotification);
+            }
+        });
     } else if (button == &loadPluginButton) {
         loadPlugin();
     } else if (button == &selectAllButton) {
@@ -331,7 +334,8 @@ void MainComponent::runMeasurement() {
 
             juce::MessageManager::callAsync([this]() {
                 progressLabel.setText("Measurement complete!", juce::dontSendNotification);
-                progressBar.setProgress(1.0);
+                progress = 1.0;
+                progressBar.repaint();
                 runMeasurementButton.setEnabled(true);
             });
         } catch (const std::exception& e) {
@@ -366,6 +370,6 @@ Config MainComponent::buildConfigFromUI() {
 }
 
 void MainComponent::showError(const juce::String& message) {
-    juce::AlertWindow::showMessageBox(juce::AlertWindow::WarningIcon, "Error", message);
+    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon, "Error", message);
     progressLabel.setText(message, juce::dontSendNotification);
 }
