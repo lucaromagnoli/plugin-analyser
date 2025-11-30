@@ -1,7 +1,7 @@
 #include "Config.h"
+#include "JuceHeader.h"
 #include "MeasurementEngine.h"
 #include "PluginLoader.h"
-#include "JuceHeader.h"
 #include <iostream>
 #include <vector>
 

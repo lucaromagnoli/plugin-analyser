@@ -2,9 +2,9 @@
 
 #include "Analyzer.h"
 #include "Config.h"
+#include "JuceHeader.h"
 #include "RunConfig.h"
 #include "SignalGenerator.h"
-#include "JuceHeader.h"
 #include <memory>
 #include <vector>
 

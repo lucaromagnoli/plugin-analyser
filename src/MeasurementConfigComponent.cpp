@@ -233,7 +233,7 @@ void MeasurementConfigComponent::loadFromConfig(const Config& config) {
     auto hasAnalyzer = [&](const juce::String& name) {
         return std::find(config.analyzers.begin(), config.analyzers.end(), name) != config.analyzers.end();
     };
-    
+
     rawCsvButton.setToggleState(hasAnalyzer("RawCsv"), juce::dontSendNotification);
     rmsPeakButton.setToggleState(hasAnalyzer("RmsPeak"), juce::dontSendNotification);
     transferCurveButton.setToggleState(hasAnalyzer("TransferCurve"), juce::dontSendNotification);
