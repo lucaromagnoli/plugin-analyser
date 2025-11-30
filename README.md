@@ -24,15 +24,38 @@ A C++ tool (JUCE-based) for measuring VST3 audio plugins with Plugin Doctor-styl
 
 ### Build Steps
 
+#### Using Makefile (Recommended)
+
+```bash
+make build-release    # Build in Release mode
+make run-gui          # Build and run GUI application
+make format           # Format code with clang-format
+make clean            # Clean build directories
+```
+
+#### Using CMake Directly
+
 ```bash
 mkdir build && cd build
-cmake ..
-cmake --build . --config Release
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel
 ```
 
 Two executables will be built:
 - `PluginAnalyser` - GUI application (recommended)
 - `plugin_measure_grid_cli` - Command-line tool
+
+### Pre-commit Hooks
+
+Install pre-commit hooks for automatic code formatting:
+
+```bash
+make install          # Install pre-commit hooks
+# or manually:
+pre-commit install
+```
+
+This will automatically format C++ files and check for common issues before each commit.
 
 ## Usage
 
