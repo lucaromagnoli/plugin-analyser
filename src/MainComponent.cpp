@@ -9,7 +9,8 @@ MainComponent::MainComponent()
       progressLabel("", "Ready"), progressBar(progress) {
     // Plugin path section
     addAndMakeVisible(pluginPathLabel);
-    pluginPathEditor.setText("/absolute/path/to/plugin.vst3", juce::dontSendNotification);
+    // Default plugin path - can be set to common VST3 location or left empty
+    pluginPathEditor.setText("", juce::dontSendNotification);
     pluginPathEditor.addListener(this);
     addAndMakeVisible(pluginPathEditor);
 
@@ -153,22 +154,26 @@ void MainComponent::buttonClicked(juce::Button* button) {
     } else if (button == &selectAllButton) {
         selectedParameters.resize(availableParameters.size(), true);
         std::fill(selectedParameters.begin(), selectedParameters.end(), true);
-        // Force ListBox to refresh all visible rows
-        int currentScrollPos = parameterListBox.getVerticalPosition();
         parameterListBox.updateContent();
-        // Scroll slightly to force repaint of all visible items
-        parameterListBox.scrollToEnsureRowIsOnscreen(0);
-        parameterListBox.setVerticalPosition(currentScrollPos);
+        // Repaint all visible rows
+        int firstVisible = parameterListBox.getRowContainingPosition(0, 0);
+        int lastVisible = parameterListBox.getRowContainingPosition(0, parameterListBox.getHeight());
+        for (int i = firstVisible; i <= lastVisible && i >= 0 && i < (int)availableParameters.size(); ++i) {
+            parameterListBox.repaintRow(i);
+        }
+        parameterListBox.repaint(); // Also repaint the whole component
         updateParameterList();
     } else if (button == &deselectAllButton) {
         selectedParameters.resize(availableParameters.size(), false);
         std::fill(selectedParameters.begin(), selectedParameters.end(), false);
-        // Force ListBox to refresh all visible rows
-        int currentScrollPos = parameterListBox.getVerticalPosition();
         parameterListBox.updateContent();
-        // Scroll slightly to force repaint of all visible items
-        parameterListBox.scrollToEnsureRowIsOnscreen(0);
-        parameterListBox.setVerticalPosition(currentScrollPos);
+        // Repaint all visible rows
+        int firstVisible = parameterListBox.getRowContainingPosition(0, 0);
+        int lastVisible = parameterListBox.getRowContainingPosition(0, parameterListBox.getHeight());
+        for (int i = firstVisible; i <= lastVisible && i >= 0 && i < (int)availableParameters.size(); ++i) {
+            parameterListBox.repaintRow(i);
+        }
+        parameterListBox.repaint(); // Also repaint the whole component
         updateParameterList();
     } else if (button == &runMeasurementButton) {
         runMeasurement();
@@ -245,7 +250,8 @@ void MainComponent::listBoxItemClicked(int row, const juce::MouseEvent& e) {
         // Always toggle on row click - the checkbox visual will update
         selectedParameters[row] = !selectedParameters[row];
         parameterListBox.updateContent();
-        parameterListBox.repaint(); // Force immediate repaint
+        parameterListBox.repaintRow(row); // Repaint the specific row that changed
+        parameterListBox.repaint(); // Also repaint the whole component
         updateParameterList();
     }
 }
