@@ -1,0 +1,38 @@
+{
+  "pluginPath": "/absolute/path/to/plugin.vst3",
+  "sampleRate": 48000,
+  "seconds": 5,
+  "blockSize": 256,
+  "signalType": "sine",
+  "sineFrequency": 1000.0,
+  "sweepStartHz": 20.0,
+  "sweepEndHz": 20000.0,
+  "inputGainBucketsDb": [-24.0, -18.0, -12.0],
+  "parameterBuckets": [
+    {
+      "paramName": "Pre",
+      "strategy": "Linear",
+      "min": 0.0,
+      "max": 1.0,
+      "numBuckets": 5
+    },
+    {
+      "paramName": "Bass++",
+      "strategy": "ExplicitValues",
+      "values": [0.0, 1.0]
+    },
+    {
+      "paramName": "Air++",
+      "strategy": "ExplicitValues",
+      "values": [0.0, 1.0]
+    }
+  ],
+  "analyzers": [
+    "RawCsv",
+    "RmsPeak",
+    "TransferCurve",
+    "LinearResponse",
+    "Thd"
+  ]
+}
+
