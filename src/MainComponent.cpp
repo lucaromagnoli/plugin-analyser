@@ -154,11 +154,15 @@ void MainComponent::buttonClicked(juce::Button* button) {
         selectedParameters.resize(availableParameters.size(), true);
         std::fill(selectedParameters.begin(), selectedParameters.end(), true);
         parameterListBox.updateContent();
+        parameterListBox.repaint(); // Force immediate repaint
+        repaint(); // Also repaint the component itself
         updateParameterList();
     } else if (button == &deselectAllButton) {
         selectedParameters.resize(availableParameters.size(), false);
         std::fill(selectedParameters.begin(), selectedParameters.end(), false);
         parameterListBox.updateContent();
+        parameterListBox.repaint(); // Force immediate repaint
+        repaint(); // Also repaint the component itself
         updateParameterList();
     } else if (button == &runMeasurementButton) {
         runMeasurement();
@@ -235,6 +239,7 @@ void MainComponent::listBoxItemClicked(int row, const juce::MouseEvent& e) {
         // Always toggle on row click - the checkbox visual will update
         selectedParameters[row] = !selectedParameters[row];
         parameterListBox.updateContent();
+        parameterListBox.repaint(); // Force immediate repaint
         updateParameterList();
     }
 }
