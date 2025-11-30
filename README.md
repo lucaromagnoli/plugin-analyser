@@ -12,7 +12,7 @@
 
 Available as both a **GUI application** and a **command-line tool**.
 
-## Features
+## ✨ Features
 
 - Load and test VST3 plugins offline
 - **Grid-based parameter sampling**: Automatically test all combinations of selected parameters and input levels
@@ -25,7 +25,7 @@ Available as both a **GUI application** and a **command-line tool**.
   - Static dynamics (input→output level)
 - Export data as CSV for analysis in any tool or language
 
-## Building
+## 🛠️ Building
 
 ### Prerequisites
 
@@ -68,7 +68,7 @@ pre-commit install
 
 This will automatically format C++ files and check for common issues before each commit.
 
-## Usage
+## 🎯 Usage
 
 ### GUI Application (Recommended)
 
@@ -96,11 +96,11 @@ plugin_measure_grid_cli --config config.json --out /path/to/output
 - `--samplerate SR`: Override sample rate
 - `--blocksize BS`: Override block size
 
-## Configuration
+## ⚙️ Configuration
 
 See `example_config.json` for a complete example configuration file.
 
-## Analyzers
+## 🔬 Analyzers
 
 The tool supports the following analyzers:
 
@@ -110,20 +110,20 @@ The tool supports the following analyzers:
 - **LinearResponse**: Frequency response from noise or sweep signals
 - **Thd**: Total Harmonic Distortion analysis for sine signals
 
-## Signal Types
+## 🎵 Signal Types
 
 - **sine**: Pure sine wave at specified frequency (for THD analysis)
 - **noise**: White noise (for frequency response)
 - **sweep**: Logarithmic frequency sweep (for frequency response)
 
-## Parameter Bucket Strategies
+## 📊 Parameter Bucket Strategies
 
 - **Linear**: Evenly spaced values between min and max
 - **ExplicitValues**: Use exact values from the `values` array
 - **Log**: Logarithmically spaced values
 - **EdgeAndCenter**: Three points: min, center, max
 
-## Example Output
+## 📁 Example Output
 
 The tool generates CSV files in the output directory:
 
@@ -133,6 +133,6 @@ The tool generates CSV files in the output directory:
 - `grid_linear_response.csv`: Frequency response (if LinearResponse enabled)
 - `grid_thd.csv`: THD measurements (if Thd analyzer enabled)
 
-## License
+## 📄 License
 
 MIT License - see LICENSE file for details.
