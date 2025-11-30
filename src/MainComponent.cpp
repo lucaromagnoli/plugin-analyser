@@ -374,6 +374,25 @@ void MainComponent::runMeasurement() {
     std::thread([this, config, outDir]() {
         try {
             std::cerr << "[Measurement] Starting measurement thread..." << std::endl;
+            std::cerr.flush(); // Ensure logs appear immediately
+
+            // Create a separate plugin instance for the measurement thread
+            // This is necessary because JUCE plugins should not be accessed from multiple threads
+            std::cerr << "[Measurement] Creating plugin instance for measurement thread..." << std::endl;
+            juce::File pluginFile(config.pluginPath);
+            juce::String errorMessage;
+            auto measurementPlugin = loadPluginInstance(pluginFile, config.sampleRate, config.blockSize, errorMessage);
+
+            if (measurementPlugin == nullptr) {
+                std::cerr << "[Measurement] Failed to create plugin instance: " << errorMessage << std::endl;
+                juce::MessageManager::callAsync([this, errorMessage]() {
+                    showError("Failed to create plugin instance for measurement: " + errorMessage);
+                    runMeasurementButton.setEnabled(true);
+                });
+                return;
+            }
+            std::cerr << "[Measurement] Plugin instance created successfully" << std::endl;
+            std::cerr.flush();
 
             // Build parameter name list
             std::vector<juce::String> paramNames;
@@ -383,11 +402,13 @@ void MainComponent::runMeasurement() {
                 }
             }
             std::cerr << "[Measurement] Selected " << paramNames.size() << " parameters" << std::endl;
+            std::cerr.flush();
 
             // Build run grid
             std::cerr << "[Measurement] Building run grid..." << std::endl;
             auto runs = buildRunGrid(config, paramNames);
             std::cerr << "[Measurement] Generated " << runs.size() << " measurement runs" << std::endl;
+            std::cerr.flush();
 
             // Create analyzers
             std::cerr << "[Measurement] Creating analyzers..." << std::endl;
@@ -398,7 +419,7 @@ void MainComponent::runMeasurement() {
             int64_t totalSamples = (int64_t)(config.seconds * config.sampleRate);
             std::cerr << "[Measurement] Starting measurement grid (" << runs.size() << " runs, "
                       << totalSamples << " samples per run)..." << std::endl;
-            runMeasurementGrid(*pluginInstance, config.sampleRate, config.blockSize, totalSamples, runs, analyzers,
+            runMeasurementGrid(*measurementPlugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers,
                                config, outDir);
             std::cerr << "[Measurement] Measurement grid complete" << std::endl;
 
