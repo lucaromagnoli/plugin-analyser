@@ -82,14 +82,30 @@ int main(int argc, char* argv[]) {
 
         // Load plugin
         std::cout << "Loading plugin: " << config.pluginPath << std::endl;
-        auto plugin = loadPluginInstance(juce::File(config.pluginPath), config.sampleRate, config.blockSize);
+        juce::String errorMessage;
+        auto plugin =
+            loadPluginInstance(juce::File(config.pluginPath), config.sampleRate, config.blockSize, errorMessage);
 
         if (plugin == nullptr) {
-            std::cerr << "Failed to load plugin" << std::endl;
+            std::cerr << (errorMessage.isEmpty() ? "Failed to load plugin" : errorMessage.toStdString()) << std::endl;
             return 1;
         }
 
         std::cout << "Plugin loaded: " << plugin->getName() << std::endl;
+
+        // List all available parameters
+        auto paramMap = buildParameterMap(*plugin, true); // Show only UI-exposed parameters
+        std::cout << "\nAvailable parameters (" << paramMap.size() << "):" << std::endl;
+        std::cout << "========================================" << std::endl;
+        int idx = 0;
+        for (const auto& [name, param] : paramMap) {
+            float value = param->getValue();
+            float defaultValue = param->getDefaultValue();
+            juce::String displayName = param->getName(512);
+            std::cout << idx++ << ". " << displayName << " (internal: " << name << ")" << std::endl;
+            std::cout << "   Value: " << value << " (default: " << defaultValue << ")" << std::endl;
+        }
+        std::cout << "========================================\n" << std::endl;
 
         // Build parameter name list
         std::vector<juce::String> paramNames;
@@ -110,7 +126,8 @@ int main(int argc, char* argv[]) {
         // Run measurements
         int64_t totalSamples = (int64_t)(config.seconds * config.sampleRate);
         std::cout << "Running measurements..." << std::endl;
-        runMeasurementGrid(*plugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers, config, outDir);
+        runMeasurementGrid(*plugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers, config, outDir,
+                           nullptr);
 
         // Finish analyzers
         std::cout << "Finalizing analyzers..." << std::endl;

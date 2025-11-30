@@ -12,12 +12,15 @@
 #include <iostream>
 
 std::vector<RunConfig> buildRunGrid(const Config& config, const std::vector<juce::String>& paramNames) {
+    std::cerr << "[buildRunGrid] Starting with " << paramNames.size() << " parameters, "
+              << config.parameterBuckets.size() << " bucket configs" << std::endl;
     std::vector<RunConfig> runs;
 
     // Convert ParameterBucketConfig to BucketSpec and generate values
     std::vector<std::pair<juce::String, std::vector<float>>> paramValueLists;
 
     for (const auto& bucketConfig : config.parameterBuckets) {
+        std::cerr << "[buildRunGrid] Processing bucket for parameter: " << bucketConfig.paramName << std::endl;
         BucketSpec spec;
         spec.paramName = bucketConfig.paramName;
         spec.strategy = BucketSpec::strategyFromString(bucketConfig.strategy);
@@ -27,11 +30,15 @@ std::vector<RunConfig> buildRunGrid(const Config& config, const std::vector<juce
         spec.values = bucketConfig.values;
 
         auto values = spec.generateValues();
+        std::cerr << "[buildRunGrid] Generated " << values.size() << " values for " << bucketConfig.paramName
+                  << std::endl;
         paramValueLists.push_back({bucketConfig.paramName, values});
     }
 
     // Build Cartesian product of parameter values and input gain buckets
     int runId = 0;
+    std::cerr << "[buildRunGrid] Building Cartesian product with " << config.inputGainBucketsDb.size()
+              << " input gain buckets..." << std::endl;
 
     // Helper function to generate combinations recursively
     std::function<void(int, std::map<juce::String, float>)> generateCombinations;
@@ -44,6 +51,9 @@ std::vector<RunConfig> buildRunGrid(const Config& config, const std::vector<juce
                 run.paramValues = currentParams;
                 run.inputGainDb = inputGainDb;
                 runs.push_back(run);
+            }
+            if (runId % 1000 == 0) {
+                std::cerr << "[buildRunGrid] Generated " << runId << " runs so far..." << std::endl;
             }
             return;
         }
@@ -58,7 +68,7 @@ std::vector<RunConfig> buildRunGrid(const Config& config, const std::vector<juce
     };
 
     generateCombinations(0, {});
-
+    std::cerr << "[buildRunGrid] Complete: generated " << runs.size() << " total runs" << std::endl;
     return runs;
 }
 
@@ -95,8 +105,11 @@ std::vector<std::unique_ptr<Analyzer>> createAnalyzers(const Config& config, con
 
 void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, int blockSize, int64_t totalSamples,
                         const std::vector<RunConfig>& runs, const std::vector<std::unique_ptr<Analyzer>>& analyzers,
-                        const Config& config, const juce::File& outDir) {
-    auto paramMap = buildParameterMap(plugin);
+                        const Config& config, const juce::File& outDir, std::function<void(int)> progressCallback) {
+    std::cerr << "[runMeasurementGrid] Starting with " << runs.size() << " runs, " << totalSamples << " samples per run"
+              << std::endl;
+    auto paramMap = buildParameterMap(plugin, false); // Use all parameters for measurement
+    std::cerr << "[runMeasurementGrid] Built parameter map with " << paramMap.size() << " parameters" << std::endl;
 
     // Build parameter name list in order
     std::vector<juce::String> paramNames;
@@ -108,8 +121,15 @@ void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, in
     juce::AudioBuffer<float> outputBuffer(2, blockSize);
     juce::MidiBuffer midiBuffer;
 
+    int runCount = 0;
     for (const auto& run : runs) {
-        std::cout << "Running measurement " << run.runId << " / " << runs.size() << std::endl;
+        runCount++;
+        if (progressCallback) {
+            progressCallback(run.runId);
+        }
+        if (runCount % 10 == 0 || runCount == 1) {
+            std::cerr << "[runMeasurementGrid] Running measurement " << run.runId << " / " << runs.size() << std::endl;
+        }
 
         // Set plugin parameters
         for (const auto& [paramName, value] : run.paramValues) {
@@ -144,8 +164,14 @@ void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, in
 
         // Process samples
         int64_t currentSample = 0;
+        int blockCount = 0;
         while (currentSample < totalSamples) {
             int numThisBlock = (int)std::min((int64_t)blockSize, totalSamples - currentSample);
+            blockCount++;
+            if (blockCount % 1000 == 0) {
+                std::cerr << "[runMeasurementGrid] Run " << run.runId << ": processed " << currentSample << " / "
+                          << totalSamples << " samples" << std::endl;
+            }
 
             // Clear buffers
             inputBuffer.clear();
@@ -160,8 +186,11 @@ void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, in
                 sweepGen->fillBlock(inputBuffer, numThisBlock);
             }
 
-            // Process through plugin
-            plugin.processBlock(inputBuffer, outputBuffer, midiBuffer);
+            // Copy input to output buffer (processBlock works in-place)
+            outputBuffer.makeCopyOf(inputBuffer);
+
+            // Process through plugin (modifies outputBuffer in-place)
+            plugin.processBlock(outputBuffer, midiBuffer);
 
             // Build BlockContext
             BlockContext ctx;

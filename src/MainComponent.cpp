@@ -9,7 +9,14 @@ MainComponent::MainComponent()
       progressLabel("", "Ready"), progressBar(progress) {
     // Plugin path section
     addAndMakeVisible(pluginPathLabel);
-    pluginPathEditor.setText("/absolute/path/to/plugin.vst3", juce::dontSendNotification);
+    // Default plugin path - set to dev plugin in debug builds
+#ifdef DEBUG
+    pluginPathEditor.setText("/Volumes/External SSD/Plug-Ins/VST3/Acustica/GAINSTATION2.vst3",
+                             juce::dontSendNotification);
+#else
+    // Default plugin path - can be set to common VST3 location or left empty
+    pluginPathEditor.setText("", juce::dontSendNotification);
+#endif
     pluginPathEditor.addListener(this);
     addAndMakeVisible(pluginPathEditor);
 
@@ -26,6 +33,8 @@ MainComponent::MainComponent()
     // Parameter list
     addAndMakeVisible(parametersLabel);
     parameterListBox.setModel(this);
+    parameterListBox.setRowSelectedOnMouseDown(false); // Disable row selection - we handle clicks ourselves
+    parameterListBox.setMultipleSelectionEnabled(false);
     addAndMakeVisible(parameterListBox);
 
     selectAllButton.setButtonText("Select All");
@@ -130,26 +139,48 @@ void MainComponent::resized() {
 
 void MainComponent::buttonClicked(juce::Button* button) {
     if (button == &browseButton) {
-        juce::FileChooser chooser("Select VST3 Plugin", juce::File(), "*.vst3");
+        auto chooser = std::make_shared<juce::FileChooser>("Select VST3 Plugin", juce::File(), "*.vst3");
         auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
-        chooser.launchAsync(chooserFlags, [this](const juce::FileChooser& fc) {
+        chooser->launchAsync(chooserFlags, [this, chooser](const juce::FileChooser& fc) {
             if (fc.getResults().size() > 0) {
                 pluginPathEditor.setText(fc.getResult().getFullPathName(), juce::dontSendNotification);
             }
         });
     } else if (button == &browseOutputButton) {
-        juce::FileChooser chooser("Select Output Directory", juce::File(outputPathEditor.getText()));
-        if (chooser.browseForDirectory()) {
-            outputPathEditor.setText(chooser.getResult().getFullPathName(), juce::dontSendNotification);
-        }
+        auto chooser =
+            std::make_shared<juce::FileChooser>("Select Output Directory", juce::File(outputPathEditor.getText()));
+        auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories;
+        chooser->launchAsync(chooserFlags, [this, chooser](const juce::FileChooser& fc) {
+            if (fc.getResults().size() > 0) {
+                outputPathEditor.setText(fc.getResult().getFullPathName(), juce::dontSendNotification);
+            }
+        });
     } else if (button == &loadPluginButton) {
         loadPlugin();
     } else if (button == &selectAllButton) {
+        selectedParameters.resize(availableParameters.size(), true);
         std::fill(selectedParameters.begin(), selectedParameters.end(), true);
         parameterListBox.updateContent();
+        // Repaint all visible rows
+        int firstVisible = parameterListBox.getRowContainingPosition(0, 0);
+        int lastVisible = parameterListBox.getRowContainingPosition(0, parameterListBox.getHeight());
+        for (int i = firstVisible; i <= lastVisible && i >= 0 && i < (int)availableParameters.size(); ++i) {
+            parameterListBox.repaintRow(i);
+        }
+        parameterListBox.repaint(); // Also repaint the whole component
+        updateParameterList();
     } else if (button == &deselectAllButton) {
+        selectedParameters.resize(availableParameters.size(), false);
         std::fill(selectedParameters.begin(), selectedParameters.end(), false);
         parameterListBox.updateContent();
+        // Repaint all visible rows
+        int firstVisible = parameterListBox.getRowContainingPosition(0, 0);
+        int lastVisible = parameterListBox.getRowContainingPosition(0, parameterListBox.getHeight());
+        for (int i = firstVisible; i <= lastVisible && i >= 0 && i < (int)availableParameters.size(); ++i) {
+            parameterListBox.repaintRow(i);
+        }
+        parameterListBox.repaint(); // Also repaint the whole component
+        updateParameterList();
     } else if (button == &runMeasurementButton) {
         runMeasurement();
     }
@@ -167,25 +198,66 @@ void MainComponent::paintListBoxItem(int rowNumber, juce::Graphics& g, int width
     if (rowNumber < 0 || rowNumber >= (int)availableParameters.size())
         return;
 
-    if (rowIsSelected)
-        g.fillAll(juce::Colours::lightblue);
-    else
-        g.fillAll(rowNumber % 2 == 0 ? juce::Colours::white : juce::Colours::lightgrey);
+    // Background - use subtle alternating colors, ignore rowIsSelected since we disabled selection
+    g.fillAll(rowNumber % 2 == 0 ? juce::Colours::white : juce::Colours::lightgrey.withAlpha(0.3f));
 
+    // Draw checkbox
+    const int checkboxSize = 18;
+    const int checkboxX = 5;
+    const int checkboxY = (height - checkboxSize) / 2;
+    juce::Rectangle<float> checkboxBounds((float)checkboxX, (float)checkboxY, (float)checkboxSize, (float)checkboxSize);
+
+    bool isChecked = rowNumber < (int)selectedParameters.size() && selectedParameters[rowNumber];
+
+    // Draw checkbox border
+    g.setColour(juce::Colours::darkgrey);
+    g.drawRect(checkboxBounds, 1.5f);
+
+    // Draw checkbox fill if checked
+    if (isChecked) {
+        g.setColour(juce::Colours::blue);
+        g.fillRect(checkboxBounds.reduced(2.0f));
+
+        // Draw checkmark using a simple path
+        g.setColour(juce::Colours::white);
+        juce::Path checkmark;
+        const float x = checkboxBounds.getX();
+        const float y = checkboxBounds.getY();
+        const float w = checkboxBounds.getWidth();
+        const float h = checkboxBounds.getHeight();
+
+        // Draw checkmark as two connected lines
+        checkmark.startNewSubPath(x + w * 0.2f, y + h * 0.5f);
+        checkmark.lineTo(x + w * 0.45f, y + h * 0.75f);
+        checkmark.lineTo(x + w * 0.8f, y + h * 0.25f);
+
+        g.strokePath(checkmark, juce::PathStrokeType(2.5f, juce::PathStrokeType::curved));
+    }
+
+    // Parameter name
     g.setColour(juce::Colours::black);
     g.setFont(14.0f);
-
-    juce::String text = availableParameters[rowNumber];
-    if (rowNumber < (int)selectedParameters.size() && selectedParameters[rowNumber])
-        text = "✓ " + text;
-
-    g.drawText(text, 5, 0, width - 5, height, juce::Justification::centredLeft);
+    g.drawText(availableParameters[rowNumber], checkboxX + checkboxSize + 10, 0, width - checkboxX - checkboxSize - 10,
+               height, juce::Justification::centredLeft);
 }
 
 void MainComponent::listBoxItemClicked(int row, const juce::MouseEvent& e) {
-    if (row >= 0 && row < (int)selectedParameters.size()) {
+    // Ensure selectedParameters is the right size
+    if (selectedParameters.size() != availableParameters.size()) {
+        selectedParameters.resize(availableParameters.size(), false);
+    }
+
+    // Only toggle if clicking within the checkbox area or the row itself
+    // This prevents accidental toggles when clicking elsewhere
+    const int checkboxArea = 30; // Approximate checkbox area width
+
+    // Toggle if clicking in the left part of the row (where checkbox is) or anywhere on the row
+    if (row >= 0 && row < (int)selectedParameters.size() && row < (int)availableParameters.size()) {
+        // Always toggle on row click - the checkbox visual will update
         selectedParameters[row] = !selectedParameters[row];
         parameterListBox.updateContent();
+        parameterListBox.repaintRow(row); // Repaint the specific row that changed
+        parameterListBox.repaint();       // Also repaint the whole component
         updateParameterList();
     }
 }
@@ -198,7 +270,8 @@ void MainComponent::loadPlugin() {
     }
 
     juce::File pluginFile(pluginPath);
-    if (!pluginFile.existsAsFile()) {
+    // VST3 plugins on macOS are bundles (directories), not files
+    if (!pluginFile.exists()) {
         showError("Plugin file does not exist: " + pluginPath);
         return;
     }
@@ -209,10 +282,11 @@ void MainComponent::loadPlugin() {
     Config tempConfig;
     measurementConfig->fillConfig(tempConfig);
 
-    pluginInstance = loadPluginInstance(pluginFile, tempConfig.sampleRate, tempConfig.blockSize);
+    juce::String errorMessage;
+    pluginInstance = loadPluginInstance(pluginFile, tempConfig.sampleRate, tempConfig.blockSize, errorMessage);
 
     if (pluginInstance == nullptr) {
-        showError("Failed to load plugin");
+        showError(errorMessage.isEmpty() ? "Failed to load plugin" : errorMessage);
         return;
     }
 
@@ -226,7 +300,7 @@ void MainComponent::scanPluginParameters() {
     if (pluginInstance == nullptr)
         return;
 
-    parameterMap = buildParameterMap(*pluginInstance);
+    parameterMap = buildParameterMap(*pluginInstance, true); // Only UI-exposed parameters
     availableParameters.clear();
     selectedParameters.clear();
 
@@ -305,6 +379,27 @@ void MainComponent::runMeasurement() {
 
     std::thread([this, config, outDir]() {
         try {
+            std::cerr << "[Measurement] Starting measurement thread..." << std::endl;
+            std::cerr.flush(); // Ensure logs appear immediately
+
+            // Create a separate plugin instance for the measurement thread
+            // This is necessary because JUCE plugins should not be accessed from multiple threads
+            std::cerr << "[Measurement] Creating plugin instance for measurement thread..." << std::endl;
+            juce::File pluginFile(config.pluginPath);
+            juce::String errorMessage;
+            auto measurementPlugin = loadPluginInstance(pluginFile, config.sampleRate, config.blockSize, errorMessage);
+
+            if (measurementPlugin == nullptr) {
+                std::cerr << "[Measurement] Failed to create plugin instance: " << errorMessage << std::endl;
+                juce::MessageManager::callAsync([this, errorMessage]() {
+                    showError("Failed to create plugin instance for measurement: " + errorMessage);
+                    runMeasurementButton.setEnabled(true);
+                });
+                return;
+            }
+            std::cerr << "[Measurement] Plugin instance created successfully" << std::endl;
+            std::cerr.flush();
+
             // Build parameter name list
             std::vector<juce::String> paramNames;
             for (size_t i = 0; i < availableParameters.size(); ++i) {
@@ -312,31 +407,119 @@ void MainComponent::runMeasurement() {
                     paramNames.push_back(availableParameters[i]);
                 }
             }
+            std::cerr << "[Measurement] Selected " << paramNames.size() << " parameters" << std::endl;
+            std::cerr.flush();
 
             // Build run grid
+            std::cerr << "[Measurement] Building run grid..." << std::endl;
+            juce::MessageManager::callAsync(
+                [this]() { progressLabel.setText("Building run grid...", juce::dontSendNotification); });
             auto runs = buildRunGrid(config, paramNames);
+            std::cerr << "[Measurement] Generated " << runs.size() << " measurement runs" << std::endl;
+
+            // Warn if too many runs and estimate time
+            if (runs.size() > 100000) {
+                std::cerr << "[Measurement] WARNING: " << runs.size()
+                          << " runs is very large. This may take a long time." << std::endl;
+
+                // Estimate time: assume ~0.1 seconds per run (very rough estimate)
+                double estimatedSeconds = runs.size() * 0.1;
+                double estimatedMinutes = estimatedSeconds / 60.0;
+                double estimatedHours = estimatedMinutes / 60.0;
+
+                juce::String timeEstimate;
+                if (estimatedHours >= 1.0) {
+                    timeEstimate = juce::String(estimatedHours, 1) + " hours";
+                } else if (estimatedMinutes >= 1.0) {
+                    timeEstimate = juce::String(estimatedMinutes, 1) + " minutes";
+                } else {
+                    timeEstimate = juce::String(estimatedSeconds, 1) + " seconds";
+                }
+
+                juce::MessageManager::callAsync([this, runs, timeEstimate]() {
+                    progressLabel.setText("WARNING: " + juce::String(runs.size()) + " runs (~" + timeEstimate +
+                                              ") - Consider reducing parameters/buckets!",
+                                          juce::dontSendNotification);
+                });
+                std::this_thread::sleep_for(std::chrono::seconds(3)); // Give user time to see warning
+            }
+            std::cerr.flush();
 
             // Create analyzers
+            std::cerr << "[Measurement] Creating analyzers..." << std::endl;
             auto analyzers = createAnalyzers(config, outDir, paramNames);
+            std::cerr << "[Measurement] Created " << analyzers.size() << " analyzers" << std::endl;
 
             // Run measurements
             int64_t totalSamples = (int64_t)(config.seconds * config.sampleRate);
-            runMeasurementGrid(*pluginInstance, config.sampleRate, config.blockSize, totalSamples, runs, analyzers,
-                               config, outDir);
+            std::cerr << "[Measurement] Starting measurement grid (" << runs.size() << " runs, " << totalSamples
+                      << " samples per run)..." << std::endl;
+            juce::MessageManager::callAsync([this, runs]() {
+                progressLabel.setText("Running " + juce::String(runs.size()) + " measurements...",
+                                      juce::dontSendNotification);
+            });
+
+            // Pass progress callback to update UI with time estimate
+            auto startTime = std::chrono::steady_clock::now();
+            runMeasurementGrid(
+                *measurementPlugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers, config, outDir,
+                [this, runs, startTime](int runIndex) {
+                    double progress = (double)(runIndex + 1) / (double)runs.size();
+                    auto currentTime = std::chrono::steady_clock::now();
+                    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
+
+                    juce::String statusText = "Run " + juce::String(runIndex + 1) + " / " + juce::String(runs.size());
+
+                    // Estimate remaining time
+                    if (runIndex > 0 && elapsed > 0) {
+                        double runsPerSecond = (double)(runIndex + 1) / (double)elapsed;
+                        int remainingRuns = runs.size() - (runIndex + 1);
+                        int estimatedSecondsRemaining = (int)(remainingRuns / runsPerSecond);
+
+                        int hours = estimatedSecondsRemaining / 3600;
+                        int minutes = (estimatedSecondsRemaining % 3600) / 60;
+                        int seconds = estimatedSecondsRemaining % 60;
+
+                        if (hours > 0) {
+                            statusText += " (~" + juce::String(hours) + "h " + juce::String(minutes) + "m remaining)";
+                        } else if (minutes > 0) {
+                            statusText += " (~" + juce::String(minutes) + "m " + juce::String(seconds) + "s remaining)";
+                        } else {
+                            statusText += " (~" + juce::String(seconds) + "s remaining)";
+                        }
+                    }
+
+                    juce::MessageManager::callAsync([this, statusText, progress]() {
+                        progressLabel.setText(statusText, juce::dontSendNotification);
+                        this->progress = progress;
+                        progressBar.repaint();
+                    });
+                });
+            std::cerr << "[Measurement] Measurement grid complete" << std::endl;
 
             // Finish analyzers
+            std::cerr << "[Measurement] Finishing analyzers..." << std::endl;
             for (auto& analyzer : analyzers) {
                 analyzer->finish(outDir);
             }
+            std::cerr << "[Measurement] All analyzers finished" << std::endl;
 
             juce::MessageManager::callAsync([this]() {
                 progressLabel.setText("Measurement complete!", juce::dontSendNotification);
-                progressBar.setProgress(1.0);
+                progress = 1.0;
+                progressBar.repaint();
                 runMeasurementButton.setEnabled(true);
             });
         } catch (const std::exception& e) {
+            std::cerr << "[Measurement] Exception: " << e.what() << std::endl;
             juce::MessageManager::callAsync([this, e]() {
                 showError("Error: " + juce::String(e.what()));
+                runMeasurementButton.setEnabled(true);
+            });
+        } catch (...) {
+            std::cerr << "[Measurement] Unknown exception occurred" << std::endl;
+            juce::MessageManager::callAsync([this]() {
+                showError("Unknown error occurred during measurement");
                 runMeasurementButton.setEnabled(true);
             });
         }
@@ -366,6 +549,6 @@ Config MainComponent::buildConfigFromUI() {
 }
 
 void MainComponent::showError(const juce::String& message) {
-    juce::AlertWindow::showMessageBox(juce::AlertWindow::WarningIcon, "Error", message);
+    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon, "Error", message);
     progressLabel.setText(message, juce::dontSendNotification);
 }

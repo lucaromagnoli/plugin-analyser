@@ -27,7 +27,7 @@ void LinearResponseAnalyzer::processFFTWindow(RunSpectrum& spectrum) {
     applyHannWindow(spectrum.outBuffer);
 
     // Perform FFT
-    juce::dsp::FFT fft((int)std::log2(fftSize), juce::dsp::FFT::Order::forward);
+    juce::dsp::FFT fft((int)std::log2(fftSize));
     std::vector<std::complex<float>> inFFT(fftSize);
     std::vector<std::complex<float>> outFFT(fftSize);
 
@@ -38,8 +38,7 @@ void LinearResponseAnalyzer::processFFTWindow(RunSpectrum& spectrum) {
     }
 
     // Perform FFT
-    fft.perform(inFFT.data(), false);
-    fft.perform(outFFT.data(), false);
+    fft.perform(inFFT.data(), outFFT.data(), false);
 
     // Accumulate magnitude squared
     const int numBins = fftSize / 2;

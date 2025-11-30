@@ -60,7 +60,7 @@ void ThdAnalyzer::processFFTWindow(RunThdData& data, int64_t centreSample) {
     applyHannWindow(data.buffer);
 
     // Perform FFT
-    juce::dsp::FFT fft((int)std::log2(fftSize), juce::dsp::FFT::Order::forward);
+    juce::dsp::FFT fft((int)std::log2(fftSize));
     std::vector<std::complex<float>> fftResult(fftSize);
 
     // Copy to complex buffer
@@ -68,8 +68,8 @@ void ThdAnalyzer::processFFTWindow(RunThdData& data, int64_t centreSample) {
         fftResult[i] = std::complex<float>(data.buffer[i], 0.0f);
     }
 
-    // Perform FFT
-    fft.perform(fftResult.data(), false);
+    // Perform FFT (in-place)
+    fft.perform(fftResult.data(), fftResult.data(), false);
 
     // Compute THD
     double thd = computeTHD(fftResult, data.sampleRate);
