@@ -373,6 +373,8 @@ void MainComponent::runMeasurement() {
 
     std::thread([this, config, outDir]() {
         try {
+            std::cerr << "[Measurement] Starting measurement thread..." << std::endl;
+
             // Build parameter name list
             std::vector<juce::String> paramNames;
             for (size_t i = 0; i < availableParameters.size(); ++i) {
@@ -380,22 +382,32 @@ void MainComponent::runMeasurement() {
                     paramNames.push_back(availableParameters[i]);
                 }
             }
+            std::cerr << "[Measurement] Selected " << paramNames.size() << " parameters" << std::endl;
 
             // Build run grid
+            std::cerr << "[Measurement] Building run grid..." << std::endl;
             auto runs = buildRunGrid(config, paramNames);
+            std::cerr << "[Measurement] Generated " << runs.size() << " measurement runs" << std::endl;
 
             // Create analyzers
+            std::cerr << "[Measurement] Creating analyzers..." << std::endl;
             auto analyzers = createAnalyzers(config, outDir, paramNames);
+            std::cerr << "[Measurement] Created " << analyzers.size() << " analyzers" << std::endl;
 
             // Run measurements
             int64_t totalSamples = (int64_t)(config.seconds * config.sampleRate);
+            std::cerr << "[Measurement] Starting measurement grid (" << runs.size() << " runs, "
+                      << totalSamples << " samples per run)..." << std::endl;
             runMeasurementGrid(*pluginInstance, config.sampleRate, config.blockSize, totalSamples, runs, analyzers,
                                config, outDir);
+            std::cerr << "[Measurement] Measurement grid complete" << std::endl;
 
             // Finish analyzers
+            std::cerr << "[Measurement] Finishing analyzers..." << std::endl;
             for (auto& analyzer : analyzers) {
                 analyzer->finish(outDir);
             }
+            std::cerr << "[Measurement] All analyzers finished" << std::endl;
 
             juce::MessageManager::callAsync([this]() {
                 progressLabel.setText("Measurement complete!", juce::dontSendNotification);
@@ -404,8 +416,15 @@ void MainComponent::runMeasurement() {
                 runMeasurementButton.setEnabled(true);
             });
         } catch (const std::exception& e) {
+            std::cerr << "[Measurement] Exception: " << e.what() << std::endl;
             juce::MessageManager::callAsync([this, e]() {
                 showError("Error: " + juce::String(e.what()));
+                runMeasurementButton.setEnabled(true);
+            });
+        } catch (...) {
+            std::cerr << "[Measurement] Unknown exception occurred" << std::endl;
+            juce::MessageManager::callAsync([this]() {
+                showError("Unknown error occurred during measurement");
                 runMeasurementButton.setEnabled(true);
             });
         }

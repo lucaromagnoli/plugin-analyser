@@ -15,7 +15,8 @@ help:
 	@echo "  build-release      - Build in Release mode"
 	@echo ""
 	@echo "Run:"
-	@echo "  run-gui            - Build and run GUI application"
+	@echo "  run-gui            - Build and run GUI application (Release)"
+	@echo "  run-gui-debug      - Build and run GUI application (Debug)"
 	@echo "  run-cli            - Build and run CLI tool (requires config)"
 	@echo ""
 	@echo "Code Quality:"
@@ -36,6 +37,8 @@ build-debug:
 	@echo "🔨 Building (Debug)..."
 	@cmake --build $(BUILD_DEBUG) --parallel
 	@echo "✅ Build complete! Executables in $(BUILD_DEBUG)/"
+	@echo "📍 GUI app: $(BUILD_DEBUG)/Plugin Analyser.app"
+	@echo "📍 CLI tool: $(BUILD_DEBUG)/plugin_measure_grid_cli"
 
 # Build Release
 build-release:
@@ -97,9 +100,9 @@ install:
 		echo "⚠️  pre-commit not found. Install with: pip install pre-commit"; \
 	fi
 
-# Run GUI application
+# Run GUI application (Release)
 run-gui: build-release
-	@echo "🚀 Launching GUI application..."
+	@echo "🚀 Launching GUI application (Release)..."
 	@if [ -d "$(BUILD_RELEASE)/Plugin Analyser.app" ]; then \
 		open "$(BUILD_RELEASE)/Plugin Analyser.app"; \
 		echo "✅ App launched: $(BUILD_RELEASE)/Plugin Analyser.app"; \
@@ -108,6 +111,21 @@ run-gui: build-release
 	elif [ -f $(BUILD_RELEASE)/PluginAnalyser ]; then \
 		$(BUILD_RELEASE)/PluginAnalyser & \
 		echo "✅ App launched: $(BUILD_RELEASE)/PluginAnalyser"; \
+	else \
+		echo "⚠️  Executable not found. Check build output."; \
+	fi
+
+# Run GUI application (Debug)
+run-gui-debug: build-debug
+	@echo "🚀 Launching GUI application (Debug)..."
+	@if [ -d "$(BUILD_DEBUG)/Plugin Analyser.app" ]; then \
+		open "$(BUILD_DEBUG)/Plugin Analyser.app"; \
+		echo "✅ App launched: $(BUILD_DEBUG)/Plugin Analyser.app"; \
+	elif [ -f $(BUILD_DEBUG)/PluginAnalyser.app/Contents/MacOS/PluginAnalyser ]; then \
+		open $(BUILD_DEBUG)/PluginAnalyser.app; \
+	elif [ -f $(BUILD_DEBUG)/PluginAnalyser ]; then \
+		$(BUILD_DEBUG)/PluginAnalyser & \
+		echo "✅ App launched: $(BUILD_DEBUG)/PluginAnalyser"; \
 	else \
 		echo "⚠️  Executable not found. Check build output."; \
 	fi
