@@ -9,8 +9,13 @@ MainComponent::MainComponent()
       progressLabel("", "Ready"), progressBar(progress) {
     // Plugin path section
     addAndMakeVisible(pluginPathLabel);
+    // Default plugin path - set to dev plugin in debug builds
+#ifdef DEBUG
+    pluginPathEditor.setText("/Volumes/External SSD/Plug-Ins/VST3/Acustica/GAINSTATION2.vst3", juce::dontSendNotification);
+#else
     // Default plugin path - can be set to common VST3 location or left empty
     pluginPathEditor.setText("", juce::dontSendNotification);
+#endif
     pluginPathEditor.addListener(this);
     addAndMakeVisible(pluginPathEditor);
 
