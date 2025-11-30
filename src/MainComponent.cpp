@@ -201,7 +201,8 @@ void MainComponent::loadPlugin() {
     }
 
     juce::File pluginFile(pluginPath);
-    if (!pluginFile.existsAsFile()) {
+    // VST3 plugins on macOS are bundles (directories), not files
+    if (!pluginFile.exists()) {
         showError("Plugin file does not exist: " + pluginPath);
         return;
     }

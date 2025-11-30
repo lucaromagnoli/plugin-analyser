@@ -3,7 +3,8 @@
 
 std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& pluginFile, double sampleRate,
                                                               int blockSize) {
-    if (!pluginFile.existsAsFile()) {
+    // VST3 plugins on macOS are bundles (directories), not files
+    if (!pluginFile.exists()) {
         std::cerr << "Plugin file does not exist: " << pluginFile.getFullPathName() << std::endl;
         return nullptr;
     }
