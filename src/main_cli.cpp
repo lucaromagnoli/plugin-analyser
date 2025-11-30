@@ -93,6 +93,20 @@ int main(int argc, char* argv[]) {
 
         std::cout << "Plugin loaded: " << plugin->getName() << std::endl;
 
+        // List all available parameters
+        auto paramMap = buildParameterMap(*plugin, true); // Show only UI-exposed parameters
+        std::cout << "\nAvailable parameters (" << paramMap.size() << "):" << std::endl;
+        std::cout << "========================================" << std::endl;
+        int idx = 0;
+        for (const auto& [name, param] : paramMap) {
+            float value = param->getValue();
+            float defaultValue = param->getDefaultValue();
+            juce::String displayName = param->getName(512);
+            std::cout << idx++ << ". " << displayName << " (internal: " << name << ")" << std::endl;
+            std::cout << "   Value: " << value << " (default: " << defaultValue << ")" << std::endl;
+        }
+        std::cout << "========================================\n" << std::endl;
+
         // Build parameter name list
         std::vector<juce::String> paramNames;
         for (const auto& bucket : config.parameterBuckets) {

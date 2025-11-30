@@ -232,7 +232,7 @@ void MainComponent::scanPluginParameters() {
     if (pluginInstance == nullptr)
         return;
 
-    parameterMap = buildParameterMap(*pluginInstance);
+    parameterMap = buildParameterMap(*pluginInstance, true); // Only UI-exposed parameters
     availableParameters.clear();
     selectedParameters.clear();
 

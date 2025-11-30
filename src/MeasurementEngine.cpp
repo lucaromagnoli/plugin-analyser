@@ -96,7 +96,7 @@ std::vector<std::unique_ptr<Analyzer>> createAnalyzers(const Config& config, con
 void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, int blockSize, int64_t totalSamples,
                         const std::vector<RunConfig>& runs, const std::vector<std::unique_ptr<Analyzer>>& analyzers,
                         const Config& config, const juce::File& outDir) {
-    auto paramMap = buildParameterMap(plugin);
+    auto paramMap = buildParameterMap(plugin, false); // Use all parameters for measurement
 
     // Build parameter name list in order
     std::vector<juce::String> paramNames;

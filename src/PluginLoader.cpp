@@ -35,9 +35,15 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
         }
     }
 
+    // Debug: Check what formats were added
+    int numFormats = formatManager.getNumFormats();
+    std::cerr << "Format manager has " << numFormats << " format(s)" << std::endl;
+    for (int i = 0; i < numFormats; ++i) {
+        std::cerr << "  Format " << i << ": " << formatManager.getFormat(i)->getName() << std::endl;
+    }
+
     // Try to find the plugin by scanning
     bool foundFormat = false;
-    int numFormats = formatManager.getNumFormats();
 
     for (int i = 0; i < numFormats; ++i) {
         auto* format = formatManager.getFormat(i);
@@ -59,12 +65,13 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
 
     if (!foundFormat) {
         errorMessageOut = "No plugin format recognized for: " + pluginPath +
-                         "\nMake sure the file is a valid VST3 plugin bundle (.vst3 directory).";
+                          "\nMake sure the file is a valid VST3 plugin bundle (.vst3 directory).";
         std::cerr << errorMessageOut << std::endl;
         std::cerr << "Available formats: ";
         for (int i = 0; i < numFormats; ++i) {
             std::cerr << formatManager.getFormat(i)->getName();
-            if (i < numFormats - 1) std::cerr << ", ";
+            if (i < numFormats - 1)
+                std::cerr << ", ";
         }
         std::cerr << std::endl;
         return nullptr;
@@ -72,7 +79,7 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
 
     if (description.name.isEmpty()) {
         errorMessageOut = "Failed to get plugin description for: " + pluginPath +
-                         "\nThe file may be corrupted or not a valid plugin.";
+                          "\nThe file may be corrupted or not a valid plugin.";
         std::cerr << errorMessageOut << std::endl;
         return nullptr;
     }
@@ -90,12 +97,29 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
     return instance;
 }
 
-std::map<juce::String, juce::AudioProcessorParameter*> buildParameterMap(juce::AudioPluginInstance& plugin) {
+std::map<juce::String, juce::AudioProcessorParameter*> buildParameterMap(juce::AudioPluginInstance& plugin,
+                                                                         bool uiOnly) {
     std::map<juce::String, juce::AudioProcessorParameter*> paramMap;
 
     for (auto* param : plugin.getParameters()) {
         if (param == nullptr)
             continue;
+
+        // Filter out non-UI parameters if requested
+        if (uiOnly) {
+            // Skip meta parameters (internal automation)
+            if (param->isMetaParameter())
+                continue;
+
+            // Skip non-automatable parameters (typically internal)
+            if (!param->isAutomatable())
+                continue;
+
+            // Skip MIDI CC parameters (they're not UI-exposed)
+            juce::String paramName = param->getName(512);
+            if (paramName.containsIgnoreCase("MIDI CC") || paramName.containsIgnoreCase("midi cc"))
+                continue;
+        }
 
         juce::String paramName = param->getName(512);
         paramName = paramName.trim().toLowerCase();
