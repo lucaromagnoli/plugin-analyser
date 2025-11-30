@@ -1,11 +1,12 @@
 #include "RawCsvAnalyzer.h"
 #include <iostream>
 
-RawCsvAnalyzer::RawCsvAnalyzer(const juce::File& outDir) {
-    juce::File csvFile = outDir.getChildFile("raw.csv");
+RawCsvAnalyzer::RawCsvAnalyzer(const juce::File& outDir, const juce::String& signalType) : signalType(signalType) {
+    juce::String filename = "raw_" + signalType.toLowerCase() + ".csv";
+    juce::File csvFile = outDir.getChildFile(filename);
     this->csvFile = std::make_unique<std::ofstream>(csvFile.getFullPathName().toStdString());
     if (!this->csvFile->is_open()) {
-        std::cerr << "Failed to open raw.csv for writing" << std::endl;
+        std::cerr << "Failed to open " << filename.toStdString() << " for writing" << std::endl;
         this->csvFile.reset();
     }
 }
@@ -51,6 +52,6 @@ void RawCsvAnalyzer::finish(const juce::File& outDir) {
     }
 }
 
-std::unique_ptr<Analyzer> createRawCsvAnalyzer(const juce::File& outDir) {
-    return std::make_unique<RawCsvAnalyzer>(outDir);
+std::unique_ptr<Analyzer> createRawCsvAnalyzer(const juce::File& outDir, const juce::String& signalType) {
+    return std::make_unique<RawCsvAnalyzer>(outDir, signalType);
 }

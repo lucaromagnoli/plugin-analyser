@@ -4,8 +4,9 @@
 #include <iostream>
 
 TransferCurveAnalyzer::TransferCurveAnalyzer(const juce::File& outDir, int numBins,
-                                             const std::vector<juce::String>& paramNames)
-    : numBins(numBins), paramNames(paramNames), outputDir(outDir) {}
+                                             const std::vector<juce::String>& paramNames,
+                                             const juce::String& signalType)
+    : numBins(numBins), paramNames(paramNames), outputDir(outDir), signalType(signalType) {}
 
 TransferCurveAnalyzer::~TransferCurveAnalyzer() {}
 
@@ -44,11 +45,12 @@ void TransferCurveAnalyzer::processBlock(const BlockContext& ctx) {
 }
 
 void TransferCurveAnalyzer::finish(const juce::File& outDir) {
-    juce::File csvFile = outDir.getChildFile("grid_transfer_curves.csv");
+    juce::String filename = "grid_transfer_curves_" + signalType.toLowerCase() + ".csv";
+    juce::File csvFile = outDir.getChildFile(filename);
     std::ofstream out(csvFile.getFullPathName().toStdString());
 
     if (!out.is_open()) {
-        std::cerr << "Failed to open grid_transfer_curves.csv for writing" << std::endl;
+        std::cerr << "Failed to open " << filename.toStdString() << " for writing" << std::endl;
         return;
     }
 
@@ -86,6 +88,7 @@ void TransferCurveAnalyzer::finish(const juce::File& outDir) {
 }
 
 std::unique_ptr<Analyzer> createTransferCurveAnalyzer(const juce::File& outDir, int numBins,
-                                                      const std::vector<juce::String>& paramNames) {
-    return std::make_unique<TransferCurveAnalyzer>(outDir, numBins, paramNames);
+                                                      const std::vector<juce::String>& paramNames,
+                                                      const juce::String& signalType) {
+    return std::make_unique<TransferCurveAnalyzer>(outDir, numBins, paramNames, signalType);
 }

@@ -6,7 +6,7 @@
 #include <memory>
 
 struct RawCsvAnalyzer : public Analyzer {
-    RawCsvAnalyzer(const juce::File& outDir);
+    RawCsvAnalyzer(const juce::File& outDir, const juce::String& signalType);
     ~RawCsvAnalyzer() override;
 
     void processBlock(const BlockContext& ctx) override;
@@ -15,6 +15,7 @@ struct RawCsvAnalyzer : public Analyzer {
 private:
     std::unique_ptr<std::ofstream> csvFile;
     bool headerWritten = false;
+    juce::String signalType;
 };
 
-std::unique_ptr<Analyzer> createRawCsvAnalyzer(const juce::File& outDir);
+std::unique_ptr<Analyzer> createRawCsvAnalyzer(const juce::File& outDir, const juce::String& signalType);

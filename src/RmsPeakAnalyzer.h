@@ -18,7 +18,8 @@ struct RunStats {
 };
 
 struct RmsPeakAnalyzer : public Analyzer {
-    RmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames);
+    RmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames,
+                    const juce::String& signalType);
     ~RmsPeakAnalyzer() override;
 
     void processBlock(const BlockContext& ctx) override;
@@ -30,6 +31,8 @@ private:
     std::map<int, float> runInputGainDb;                         // runId -> inputGainDb
     std::vector<juce::String> paramNames;
     juce::File outputDir;
+    juce::String signalType;
 };
 
-std::unique_ptr<Analyzer> createRmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames);
+std::unique_ptr<Analyzer> createRmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames,
+                                                const juce::String& signalType);

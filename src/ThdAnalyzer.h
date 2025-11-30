@@ -8,7 +8,7 @@
 
 struct ThdAnalyzer : public Analyzer {
     ThdAnalyzer(const juce::File& outDir, int fftSize, double fundamentalFreq,
-                const std::vector<juce::String>& paramNames);
+                const std::vector<juce::String>& paramNames, const juce::String& signalType);
     ~ThdAnalyzer() override;
 
     void processBlock(const BlockContext& ctx) override;
@@ -28,6 +28,7 @@ private:
     double fundamentalFreq;
     std::vector<juce::String> paramNames;
     juce::File outputDir;
+    juce::String signalType;
 
     void processFFTWindow(RunThdData& data, int64_t centreSample);
     void applyHannWindow(std::vector<float>& buffer);
@@ -35,4 +36,5 @@ private:
 };
 
 std::unique_ptr<Analyzer> createThdAnalyzer(const juce::File& outDir, int fftSize, double fundamentalFreq,
-                                            const std::vector<juce::String>& paramNames);
+                                            const std::vector<juce::String>& paramNames,
+                                            const juce::String& signalType);

@@ -3,8 +3,9 @@
 #include <fstream>
 #include <iostream>
 
-RmsPeakAnalyzer::RmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames)
-    : paramNames(paramNames), outputDir(outDir) {}
+RmsPeakAnalyzer::RmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames,
+                                 const juce::String& signalType)
+    : paramNames(paramNames), outputDir(outDir), signalType(signalType) {}
 
 RmsPeakAnalyzer::~RmsPeakAnalyzer() {}
 
@@ -47,11 +48,12 @@ void RmsPeakAnalyzer::processBlock(const BlockContext& ctx) {
 }
 
 void RmsPeakAnalyzer::finish(const juce::File& outDir) {
-    juce::File csvFile = outDir.getChildFile("grid_rms_peak.csv");
+    juce::String filename = "grid_rms_peak_" + signalType.toLowerCase() + ".csv";
+    juce::File csvFile = outDir.getChildFile(filename);
     std::ofstream out(csvFile.getFullPathName().toStdString());
 
     if (!out.is_open()) {
-        std::cerr << "Failed to open grid_rms_peak.csv for writing" << std::endl;
+        std::cerr << "Failed to open " << filename.toStdString() << " for writing" << std::endl;
         return;
     }
 
@@ -99,6 +101,7 @@ void RmsPeakAnalyzer::finish(const juce::File& outDir) {
     }
 }
 
-std::unique_ptr<Analyzer> createRmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames) {
-    return std::make_unique<RmsPeakAnalyzer>(outDir, paramNames);
+std::unique_ptr<Analyzer> createRmsPeakAnalyzer(const juce::File& outDir, const std::vector<juce::String>& paramNames,
+                                                const juce::String& signalType) {
+    return std::make_unique<RmsPeakAnalyzer>(outDir, paramNames, signalType);
 }

@@ -6,8 +6,9 @@
 #include <iostream>
 
 ThdAnalyzer::ThdAnalyzer(const juce::File& outDir, int fftSize, double fundamentalFreq,
-                         const std::vector<juce::String>& paramNames)
-    : fftSize(fftSize), fundamentalFreq(fundamentalFreq), paramNames(paramNames), outputDir(outDir) {}
+                         const std::vector<juce::String>& paramNames, const juce::String& signalType)
+    : fftSize(fftSize), fundamentalFreq(fundamentalFreq), paramNames(paramNames), outputDir(outDir),
+      signalType(signalType) {}
 
 ThdAnalyzer::~ThdAnalyzer() {}
 
@@ -102,11 +103,12 @@ void ThdAnalyzer::processBlock(const BlockContext& ctx) {
 }
 
 void ThdAnalyzer::finish(const juce::File& outDir) {
-    juce::File csvFile = outDir.getChildFile("grid_thd.csv");
+    juce::String filename = "grid_thd_" + signalType.toLowerCase() + ".csv";
+    juce::File csvFile = outDir.getChildFile(filename);
     std::ofstream out(csvFile.getFullPathName().toStdString());
 
     if (!out.is_open()) {
-        std::cerr << "Failed to open grid_thd.csv for writing" << std::endl;
+        std::cerr << "Failed to open " << filename.toStdString() << " for writing" << std::endl;
         return;
     }
 
@@ -137,6 +139,7 @@ void ThdAnalyzer::finish(const juce::File& outDir) {
 }
 
 std::unique_ptr<Analyzer> createThdAnalyzer(const juce::File& outDir, int fftSize, double fundamentalFreq,
-                                            const std::vector<juce::String>& paramNames) {
-    return std::make_unique<ThdAnalyzer>(outDir, fftSize, fundamentalFreq, paramNames);
+                                            const std::vector<juce::String>& paramNames,
+                                            const juce::String& signalType) {
+    return std::make_unique<ThdAnalyzer>(outDir, fftSize, fundamentalFreq, paramNames, signalType);
 }

@@ -7,7 +7,8 @@
 #include <vector>
 
 struct LinearResponseAnalyzer : public Analyzer {
-    LinearResponseAnalyzer(const juce::File& outDir, int fftSize, const std::vector<juce::String>& paramNames);
+    LinearResponseAnalyzer(const juce::File& outDir, int fftSize, const std::vector<juce::String>& paramNames,
+                           const juce::String& signalType);
     ~LinearResponseAnalyzer() override;
 
     void processBlock(const BlockContext& ctx) override;
@@ -29,10 +30,12 @@ private:
     int fftSize;
     std::vector<juce::String> paramNames;
     juce::File outputDir;
+    juce::String signalType;
 
     void processFFTWindow(RunSpectrum& spectrum);
     void applyHannWindow(std::vector<float>& buffer);
 };
 
 std::unique_ptr<Analyzer> createLinearResponseAnalyzer(const juce::File& outDir, int fftSize,
-                                                       const std::vector<juce::String>& paramNames);
+                                                       const std::vector<juce::String>& paramNames,
+                                                       const juce::String& signalType);

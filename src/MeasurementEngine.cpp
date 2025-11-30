@@ -78,20 +78,21 @@ std::vector<std::unique_ptr<Analyzer>> createAnalyzers(const Config& config, con
 
     for (const auto& analyzerName : config.analyzers) {
         if (analyzerName.equalsIgnoreCase("RawCsv")) {
-            analyzers.push_back(createRawCsvAnalyzer(outDir));
+            analyzers.push_back(createRawCsvAnalyzer(outDir, config.signalType));
         } else if (analyzerName.equalsIgnoreCase("RmsPeak")) {
-            analyzers.push_back(createRmsPeakAnalyzer(outDir, paramNames));
+            analyzers.push_back(createRmsPeakAnalyzer(outDir, paramNames, config.signalType));
         } else if (analyzerName.equalsIgnoreCase("TransferCurve")) {
-            analyzers.push_back(createTransferCurveAnalyzer(outDir, 512, paramNames));
+            analyzers.push_back(createTransferCurveAnalyzer(outDir, 512, paramNames, config.signalType));
         } else if (analyzerName.equalsIgnoreCase("LinearResponse")) {
             if (config.signalType.equalsIgnoreCase("noise") || config.signalType.equalsIgnoreCase("sweep")) {
-                analyzers.push_back(createLinearResponseAnalyzer(outDir, 4096, paramNames));
+                analyzers.push_back(createLinearResponseAnalyzer(outDir, 4096, paramNames, config.signalType));
             } else {
                 std::cerr << "Warning: LinearResponse analyzer requires noise or sweep signal type" << std::endl;
             }
         } else if (analyzerName.equalsIgnoreCase("Thd")) {
             if (config.signalType.equalsIgnoreCase("sine")) {
-                analyzers.push_back(createThdAnalyzer(outDir, 2048, config.sineFrequency, paramNames));
+                analyzers.push_back(
+                    createThdAnalyzer(outDir, 2048, config.sineFrequency, paramNames, config.signalType));
             } else {
                 std::cerr << "Warning: Thd analyzer requires sine signal type" << std::endl;
             }
