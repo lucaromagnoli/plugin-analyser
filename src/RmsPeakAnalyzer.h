@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Analyzer.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 #include <map>
 #include <vector>
 
@@ -14,7 +14,7 @@ struct RunStats {
     float peakInR = 0.0f;
     float peakOutL = 0.0f;
     float peakOutR = 0.0f;
-    int64 sampleCount = 0;
+    int64_t sampleCount = 0;
 };
 
 struct RmsPeakAnalyzer : public Analyzer {

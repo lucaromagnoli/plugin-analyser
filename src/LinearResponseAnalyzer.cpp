@@ -1,5 +1,5 @@
 #include "LinearResponseAnalyzer.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -27,7 +27,7 @@ void LinearResponseAnalyzer::processFFTWindow(RunSpectrum& spectrum) {
     applyHannWindow(spectrum.outBuffer);
 
     // Perform FFT
-    juce::dsp::FFT fft((int)std::log2(fftSize));
+    juce::dsp::FFT fft((int)std::log2(fftSize), juce::dsp::FFT::Order::forward);
     std::vector<std::complex<float>> inFFT(fftSize);
     std::vector<std::complex<float>> outFFT(fftSize);
 

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include "JuceHeader.h"
+#include <cstdint>
 
 struct SineGenerator {
     double sampleRate = 48000.0;
@@ -27,7 +28,7 @@ struct SweepGenerator {
 
     double currentPhase = 0.0;
     double currentFreq = 20.0;
-    int64 currentSample = 0;
+    int64_t currentSample = 0;
 
     void reset();
     void fillBlock(juce::AudioBuffer<float>& buffer, int numSamples);

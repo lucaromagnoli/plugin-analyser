@@ -3,7 +3,7 @@
 #include "Config.h"
 #include "MeasurementEngine.h"
 #include "PluginLoader.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 #include <memory>
 #include <vector>
 

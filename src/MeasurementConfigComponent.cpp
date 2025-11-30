@@ -230,11 +230,15 @@ void MeasurementConfigComponent::loadFromConfig(const Config& config) {
     }
     inputGainEditor.setText(gainStr, juce::dontSendNotification);
 
-    rawCsvButton.setToggleState(config.analyzers.contains("RawCsv"), juce::dontSendNotification);
-    rmsPeakButton.setToggleState(config.analyzers.contains("RmsPeak"), juce::dontSendNotification);
-    transferCurveButton.setToggleState(config.analyzers.contains("TransferCurve"), juce::dontSendNotification);
-    linearResponseButton.setToggleState(config.analyzers.contains("LinearResponse"), juce::dontSendNotification);
-    thdButton.setToggleState(config.analyzers.contains("Thd"), juce::dontSendNotification);
+    auto hasAnalyzer = [&](const juce::String& name) {
+        return std::find(config.analyzers.begin(), config.analyzers.end(), name) != config.analyzers.end();
+    };
+    
+    rawCsvButton.setToggleState(hasAnalyzer("RawCsv"), juce::dontSendNotification);
+    rmsPeakButton.setToggleState(hasAnalyzer("RmsPeak"), juce::dontSendNotification);
+    transferCurveButton.setToggleState(hasAnalyzer("TransferCurve"), juce::dontSendNotification);
+    linearResponseButton.setToggleState(hasAnalyzer("LinearResponse"), juce::dontSendNotification);
+    thdButton.setToggleState(hasAnalyzer("Thd"), juce::dontSendNotification);
 
     updateUI();
 }

@@ -1,5 +1,5 @@
 #include "MainWindow.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 
 class PluginAnalyserApplication : public juce::JUCEApplication {
 public:

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BlockContext.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 
 struct Analyzer {
     virtual ~Analyzer() = default;

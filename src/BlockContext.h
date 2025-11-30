@@ -1,11 +1,12 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include "JuceHeader.h"
+#include <cstdint>
 #include <map>
 #include <vector>
 
 struct BlockContext {
-    int64 firstSample; // absolute sample index at start of block
+    int64_t firstSample; // absolute sample index at start of block
     double sampleRate;
     int numSamples;
     const float* inL;

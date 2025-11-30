@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MainComponent.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 
 class MainWindow : public juce::DocumentWindow {
 public:

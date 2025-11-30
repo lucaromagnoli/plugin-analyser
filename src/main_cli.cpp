@@ -1,7 +1,7 @@
 #include "Config.h"
 #include "MeasurementEngine.h"
 #include "PluginLoader.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 #include <iostream>
 #include <vector>
 
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Created " << analyzers.size() << " analyzers" << std::endl;
 
         // Run measurements
-        int64 totalSamples = (int64)(config.seconds * config.sampleRate);
+        int64_t totalSamples = (int64_t)(config.seconds * config.sampleRate);
         std::cout << "Running measurements..." << std::endl;
         runMeasurementGrid(*plugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers, config, outDir);
 

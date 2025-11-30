@@ -1,5 +1,5 @@
 #include "ThdAnalyzer.h"
-#include <JuceHeader.h>
+#include "JuceHeader.h"
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -52,7 +52,7 @@ double ThdAnalyzer::computeTHD(const std::vector<std::complex<float>>& fftResult
     return thd;
 }
 
-void ThdAnalyzer::processFFTWindow(RunThdData& data, int64 centreSample) {
+void ThdAnalyzer::processFFTWindow(RunThdData& data, int64_t centreSample) {
     if ((int)data.buffer.size() < fftSize)
         return;
 
@@ -60,7 +60,7 @@ void ThdAnalyzer::processFFTWindow(RunThdData& data, int64 centreSample) {
     applyHannWindow(data.buffer);
 
     // Perform FFT
-    juce::dsp::FFT fft((int)std::log2(fftSize));
+    juce::dsp::FFT fft((int)std::log2(fftSize), juce::dsp::FFT::Order::forward);
     std::vector<std::complex<float>> fftResult(fftSize);
 
     // Copy to complex buffer
@@ -95,7 +95,7 @@ void ThdAnalyzer::processBlock(const BlockContext& ctx) {
 
         // Process FFT window when we have enough samples
         if ((int)data.buffer.size() >= fftSize) {
-            int64 centreSample = ctx.firstSample + i - fftSize / 2;
+            int64_t centreSample = ctx.firstSample + i - fftSize / 2;
             processFFTWindow(data, centreSample);
         }
     }
