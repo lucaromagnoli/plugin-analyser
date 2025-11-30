@@ -126,7 +126,8 @@ int main(int argc, char* argv[]) {
         // Run measurements
         int64_t totalSamples = (int64_t)(config.seconds * config.sampleRate);
         std::cout << "Running measurements..." << std::endl;
-        runMeasurementGrid(*plugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers, config, outDir);
+        runMeasurementGrid(*plugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers, config, outDir,
+                           nullptr);
 
         // Finish analyzers
         std::cout << "Finalizing analyzers..." << std::endl;

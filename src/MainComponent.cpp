@@ -11,7 +11,8 @@ MainComponent::MainComponent()
     addAndMakeVisible(pluginPathLabel);
     // Default plugin path - set to dev plugin in debug builds
 #ifdef DEBUG
-    pluginPathEditor.setText("/Volumes/External SSD/Plug-Ins/VST3/Acustica/GAINSTATION2.vst3", juce::dontSendNotification);
+    pluginPathEditor.setText("/Volumes/External SSD/Plug-Ins/VST3/Acustica/GAINSTATION2.vst3",
+                             juce::dontSendNotification);
 #else
     // Default plugin path - can be set to common VST3 location or left empty
     pluginPathEditor.setText("", juce::dontSendNotification);
@@ -236,8 +237,8 @@ void MainComponent::paintListBoxItem(int rowNumber, juce::Graphics& g, int width
     // Parameter name
     g.setColour(juce::Colours::black);
     g.setFont(14.0f);
-    g.drawText(availableParameters[rowNumber], checkboxX + checkboxSize + 10, 0, width - checkboxX - checkboxSize - 10, height,
-               juce::Justification::centredLeft);
+    g.drawText(availableParameters[rowNumber], checkboxX + checkboxSize + 10, 0, width - checkboxX - checkboxSize - 10,
+               height, juce::Justification::centredLeft);
 }
 
 void MainComponent::listBoxItemClicked(int row, const juce::MouseEvent& e) {
@@ -256,7 +257,7 @@ void MainComponent::listBoxItemClicked(int row, const juce::MouseEvent& e) {
         selectedParameters[row] = !selectedParameters[row];
         parameterListBox.updateContent();
         parameterListBox.repaintRow(row); // Repaint the specific row that changed
-        parameterListBox.repaint(); // Also repaint the whole component
+        parameterListBox.repaint();       // Also repaint the whole component
         updateParameterList();
     }
 }
@@ -411,8 +412,21 @@ void MainComponent::runMeasurement() {
 
             // Build run grid
             std::cerr << "[Measurement] Building run grid..." << std::endl;
+            juce::MessageManager::callAsync(
+                [this]() { progressLabel.setText("Building run grid...", juce::dontSendNotification); });
             auto runs = buildRunGrid(config, paramNames);
             std::cerr << "[Measurement] Generated " << runs.size() << " measurement runs" << std::endl;
+
+            // Warn if too many runs
+            if (runs.size() > 100000) {
+                std::cerr << "[Measurement] WARNING: " << runs.size()
+                          << " runs is very large. This may take a long time." << std::endl;
+                juce::MessageManager::callAsync([this, runs]() {
+                    progressLabel.setText("WARNING: " + juce::String(runs.size()) + " runs will take a long time!",
+                                          juce::dontSendNotification);
+                });
+                std::this_thread::sleep_for(std::chrono::seconds(2)); // Give user time to see warning
+            }
             std::cerr.flush();
 
             // Create analyzers
@@ -422,10 +436,25 @@ void MainComponent::runMeasurement() {
 
             // Run measurements
             int64_t totalSamples = (int64_t)(config.seconds * config.sampleRate);
-            std::cerr << "[Measurement] Starting measurement grid (" << runs.size() << " runs, "
-                      << totalSamples << " samples per run)..." << std::endl;
+            std::cerr << "[Measurement] Starting measurement grid (" << runs.size() << " runs, " << totalSamples
+                      << " samples per run)..." << std::endl;
+            juce::MessageManager::callAsync([this, runs]() {
+                progressLabel.setText("Running " + juce::String(runs.size()) + " measurements...",
+                                      juce::dontSendNotification);
+            });
+
+            // Pass progress callback to update UI
             runMeasurementGrid(*measurementPlugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers,
-                               config, outDir);
+                               config, outDir, [this, runs](int runIndex) {
+                                   double progress = (double)(runIndex + 1) / (double)runs.size();
+                                   juce::MessageManager::callAsync([this, runIndex, runs, progress]() {
+                                       progressLabel.setText(
+                                           "Run " + juce::String(runIndex + 1) + " / " + juce::String(runs.size()),
+                                           juce::dontSendNotification);
+                                       this->progress = progress;
+                                       progressBar.repaint();
+                                   });
+                               });
             std::cerr << "[Measurement] Measurement grid complete" << std::endl;
 
             // Finish analyzers

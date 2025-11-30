@@ -105,7 +105,8 @@ std::vector<std::unique_ptr<Analyzer>> createAnalyzers(const Config& config, con
 
 void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, int blockSize, int64_t totalSamples,
                         const std::vector<RunConfig>& runs, const std::vector<std::unique_ptr<Analyzer>>& analyzers,
-                        const Config& config, const juce::File& outDir) {
+                        const Config& config, const juce::File& outDir,
+                        std::function<void(int)> progressCallback) {
     std::cerr << "[runMeasurementGrid] Starting with " << runs.size() << " runs, " << totalSamples << " samples per run"
               << std::endl;
     auto paramMap = buildParameterMap(plugin, false); // Use all parameters for measurement
@@ -124,6 +125,9 @@ void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, in
     int runCount = 0;
     for (const auto& run : runs) {
         runCount++;
+        if (progressCallback) {
+            progressCallback(run.runId);
+        }
         if (runCount % 10 == 0 || runCount == 1) {
             std::cerr << "[runMeasurementGrid] Running measurement " << run.runId << " / " << runs.size() << std::endl;
         }

@@ -12,7 +12,8 @@ std::vector<RunConfig> buildRunGrid(const Config& config, const std::vector<juce
 
 void runMeasurementGrid(juce::AudioPluginInstance& plugin, double sampleRate, int blockSize, int64_t totalSamples,
                         const std::vector<RunConfig>& runs, const std::vector<std::unique_ptr<Analyzer>>& analyzers,
-                        const Config& config, const juce::File& outDir);
+                        const Config& config, const juce::File& outDir,
+                        std::function<void(int)> progressCallback = nullptr);
 
 std::vector<std::unique_ptr<Analyzer>> createAnalyzers(const Config& config, const juce::File& outDir,
                                                        const std::vector<juce::String>& paramNames);
