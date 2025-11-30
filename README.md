@@ -1,6 +1,6 @@
 # Plugin Analyser
 
-A command-line C++ tool (JUCE-based) for measuring VST3 audio plugins with Plugin Doctor-style analysis.
+A C++ tool (JUCE-based) for measuring VST3 audio plugins with Plugin Doctor-style analysis. Available as both a **GUI application** and a **command-line tool**.
 
 ## Features
 
@@ -30,12 +30,27 @@ cmake ..
 cmake --build . --config Release
 ```
 
-The executable will be at `build/plugin_measure_grid` (or `build/Release/plugin_measure_grid.exe` on Windows).
+Two executables will be built:
+- `PluginAnalyser` - GUI application (recommended)
+- `plugin_measure_grid_cli` - Command-line tool
 
 ## Usage
 
+### GUI Application (Recommended)
+
+Simply run `PluginAnalyser` and use the graphical interface to:
+1. Browse and load a VST3 plugin
+2. View all available plugin parameters
+3. Select which parameters to measure
+4. Configure bucket strategies for each parameter
+5. Configure measurement settings (signal type, analyzers, etc.)
+6. Run measurements and view progress
+7. Export results to CSV
+
+### Command-Line Tool
+
 ```bash
-plugin_measure_grid --config config.json --out /path/to/output
+plugin_measure_grid_cli --config config.json --out /path/to/output
 ```
 
 ### Command Line Options
