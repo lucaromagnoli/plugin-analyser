@@ -3,6 +3,7 @@
 #include "MeasurementEngine.h"
 #include "PluginLoader.h"
 #include <iostream>
+#include <thread>
 #include <vector>
 
 void printUsage(const char* programName) {
@@ -13,7 +14,8 @@ void printUsage(const char* programName) {
     std::cout << "  --plugin <path>     Override pluginPath in JSON\n";
     std::cout << "  --seconds N         Override duration in seconds\n";
     std::cout << "  --samplerate SR     Override sample rate\n";
-    std::cout << "  --blocksize BS       Override block size\n";
+    std::cout << "  --blocksize BS      Override block size\n";
+    std::cout << "  --threads N         Override number of threads (default: auto-detect)\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -28,6 +30,7 @@ int main(int argc, char* argv[]) {
     double secondsOverride = -1.0;
     double sampleRateOverride = -1.0;
     int blockSizeOverride = -1;
+    int threadsOverride = -1;
 
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
@@ -45,6 +48,8 @@ int main(int argc, char* argv[]) {
             sampleRateOverride = juce::String(argv[++i]).getDoubleValue();
         } else if (arg == "--blocksize" && i + 1 < argc) {
             blockSizeOverride = juce::String(argv[++i]).getIntValue();
+        } else if (arg == "--threads" && i + 1 < argc) {
+            threadsOverride = juce::String(argv[++i]).getIntValue();
         }
     }
 
@@ -99,6 +104,11 @@ int main(int argc, char* argv[]) {
         std::cout << "========================================" << std::endl;
         int idx = 0;
         for (const auto& [name, param] : paramMap) {
+            // Filter out MIDI CC parameters
+            juce::String lowerName = name.toLowerCase();
+            if (lowerName.contains("midi") || lowerName.contains("cc ") || lowerName.startsWith("cc")) {
+                continue;
+            }
             float value = param->getValue();
             float defaultValue = param->getDefaultValue();
             juce::String displayName = param->getName(512);
@@ -125,9 +135,18 @@ int main(int argc, char* argv[]) {
 
         // Run measurements
         int64_t totalSamples = (int64_t)(config.seconds * config.sampleRate);
-        std::cout << "Running measurements..." << std::endl;
+        int numThreads;
+        if (threadsOverride > 0) {
+            numThreads = threadsOverride;
+            std::cout << "Using " << numThreads << " thread(s) (override)" << std::endl;
+        } else {
+            numThreads = (int)std::thread::hardware_concurrency();
+            if (numThreads == 0)
+                numThreads = 1; // Fallback if detection fails
+            std::cout << "Running measurements with " << numThreads << " thread(s) (auto-detected)" << std::endl;
+        }
         runMeasurementGrid(*plugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers, config, outDir,
-                           nullptr);
+                           nullptr, numThreads);
 
         // Finish analyzers
         std::cout << "Finalizing analyzers..." << std::endl;

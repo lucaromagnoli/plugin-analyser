@@ -1,7 +1,9 @@
 #include "MainComponent.h"
 #include "MeasurementConfigComponent.h"
 #include "ParameterConfigComponent.h"
+#include <iostream>
 #include <thread>
+#include <typeinfo>
 
 MainComponent::MainComponent()
     : pluginPathLabel("Plugin Path:", "Plugin Path:"), pluginInfoLabel("", "No plugin loaded"),
@@ -321,15 +323,54 @@ void MainComponent::updateParameterList() {
 
     // Create config components for selected parameters
     int y = 10;
+    int selectedCount = 0;
+    std::cerr << "[updateParameterList] Processing " << availableParameters.size() << " available parameters"
+              << std::endl;
     for (size_t i = 0; i < availableParameters.size(); ++i) {
         if (i < selectedParameters.size() && selectedParameters[i]) {
-            auto* comp = new ParameterConfigComponent(availableParameters[i]);
-            comp->setBounds(10, y, 480, 150);
-            parameterConfigContainer.addAndMakeVisible(comp);
-            parameterConfigComponents.push_back(std::unique_ptr<ParameterConfigComponent>(comp));
-            y += 160;
+            selectedCount++;
+            std::cerr << "[updateParameterList] Processing selected parameter #" << selectedCount << ": "
+                      << availableParameters[i] << std::endl;
+
+            // Find the actual parameter from the map
+            juce::AudioProcessorParameter* param = nullptr;
+            auto it = parameterMap.find(availableParameters[i]);
+            if (it != parameterMap.end()) {
+                param = it->second;
+                std::cerr << "[updateParameterList] Found parameter: " << availableParameters[i]
+                          << " (type: " << typeid(*param).name() << ")" << std::endl;
+            } else {
+                std::cerr << "[updateParameterList] WARNING: Parameter not found in map: " << availableParameters[i]
+                          << std::endl;
+                // Try to find by original name (case-insensitive search)
+                for (const auto& [mapName, mapParam] : parameterMap) {
+                    if (mapName.equalsIgnoreCase(availableParameters[i])) {
+                        param = mapParam;
+                        std::cerr << "[updateParameterList] Found by case-insensitive match: " << mapName << std::endl;
+                        break;
+                    }
+                }
+            }
+
+            try {
+                auto* comp = new ParameterConfigComponent(availableParameters[i], param);
+                comp->setBounds(10, y, 480, 180);
+                parameterConfigContainer.addAndMakeVisible(comp);
+                parameterConfigComponents.push_back(std::unique_ptr<ParameterConfigComponent>(comp));
+                y += 190;
+                std::cerr << "[updateParameterList] Successfully created component for: " << availableParameters[i]
+                          << std::endl;
+            } catch (const std::exception& e) {
+                std::cerr << "[updateParameterList] ERROR creating component for " << availableParameters[i] << ": "
+                          << e.what() << std::endl;
+            } catch (...) {
+                std::cerr << "[updateParameterList] ERROR creating component for " << availableParameters[i]
+                          << ": Unknown exception" << std::endl;
+            }
         }
     }
+    std::cerr << "[updateParameterList] Finished processing. Created " << parameterConfigComponents.size()
+              << " components" << std::endl;
 
     parameterConfigContainer.setSize(500, y);
     parameterConfigViewport.setViewPosition(0, 0);
@@ -461,6 +502,9 @@ void MainComponent::runMeasurement() {
 
             // Pass progress callback to update UI with time estimate
             auto startTime = std::chrono::steady_clock::now();
+            int numThreads = (int)std::thread::hardware_concurrency();
+            if (numThreads == 0)
+                numThreads = 1; // Fallback if detection fails
             runMeasurementGrid(
                 *measurementPlugin, config.sampleRate, config.blockSize, totalSamples, runs, analyzers, config, outDir,
                 [this, runs, startTime](int runIndex) {
@@ -494,7 +538,8 @@ void MainComponent::runMeasurement() {
                         this->progress = progress;
                         progressBar.repaint();
                     });
-                });
+                },
+                numThreads);
             std::cerr << "[Measurement] Measurement grid complete" << std::endl;
 
             // Finish analyzers

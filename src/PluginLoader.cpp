@@ -5,6 +5,8 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
                                                               int blockSize, juce::String& errorMessageOut) {
     errorMessageOut.clear();
 
+    std::cerr << "[loadPluginInstance] Starting load for: " << pluginFile.getFullPathName() << std::endl;
+
     // VST3 plugins on macOS are bundles (directories), not files
     if (!pluginFile.exists()) {
         errorMessageOut = "Plugin file does not exist: " + pluginFile.getFullPathName();
@@ -12,8 +14,12 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
         return nullptr;
     }
 
+    std::cerr << "[loadPluginInstance] Plugin file exists, creating format manager..." << std::endl;
+
     juce::AudioPluginFormatManager formatManager;
     formatManager.addDefaultFormats();
+
+    std::cerr << "[loadPluginInstance] Format manager created, getting formats..." << std::endl;
 
     juce::String errorMessage;
     juce::PluginDescription description;
@@ -35,12 +41,9 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
         }
     }
 
-    // Debug: Check what formats were added
+    // Get number of formats (debug output removed to reduce noise in multi-threaded runs)
     int numFormats = formatManager.getNumFormats();
-    std::cerr << "Format manager has " << numFormats << " format(s)" << std::endl;
-    for (int i = 0; i < numFormats; ++i) {
-        std::cerr << "  Format " << i << ": " << formatManager.getFormat(i)->getName() << std::endl;
-    }
+    std::cerr << "[loadPluginInstance] Got " << numFormats << " formats, scanning for plugin..." << std::endl;
 
     // Try to find the plugin by scanning
     bool foundFormat = false;
@@ -48,18 +51,23 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
     for (int i = 0; i < numFormats; ++i) {
         auto* format = formatManager.getFormat(i);
         juce::String formatName = format->getName();
+        std::cerr << "[loadPluginInstance] Checking format " << i << ": " << formatName << std::endl;
 
         if (format->fileMightContainThisPluginType(pluginPath)) {
+            std::cerr << "[loadPluginInstance] Format " << formatName << " might contain plugin, scanning..." << std::endl;
             foundFormat = true;
             juce::OwnedArray<juce::PluginDescription> found;
             format->findAllTypesForFile(found, pluginPath);
+            std::cerr << "[loadPluginInstance] Scan complete, found " << found.size() << " plugin(s)" << std::endl;
             if (found.size() > 0) {
                 description = *found[0];
-                std::cerr << "Found plugin: " << description.name << " (" << formatName << ")" << std::endl;
+                std::cerr << "[loadPluginInstance] Found plugin: " << description.name << " (" << formatName << ")" << std::endl;
                 break;
             } else {
-                std::cerr << "Format " << formatName << " recognized file but found no plugins" << std::endl;
+                std::cerr << "[loadPluginInstance] Format " << formatName << " recognized file but found no plugins" << std::endl;
             }
+        } else {
+            std::cerr << "[loadPluginInstance] Format " << formatName << " does not match file type" << std::endl;
         }
     }
 
@@ -84,6 +92,8 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
         return nullptr;
     }
 
+    std::cerr << "[loadPluginInstance] Found plugin: " << description.name << ", creating instance..." << std::endl;
+
     auto instance = formatManager.createPluginInstance(description, sampleRate, blockSize, errorMessage);
 
     if (instance == nullptr) {
@@ -92,7 +102,11 @@ std::unique_ptr<juce::AudioPluginInstance> loadPluginInstance(const juce::File& 
         return nullptr;
     }
 
+    std::cerr << "[loadPluginInstance] Instance created, preparing to play..." << std::endl;
+
     instance->prepareToPlay(sampleRate, blockSize);
+
+    std::cerr << "[loadPluginInstance] Plugin ready!" << std::endl;
 
     return instance;
 }
@@ -137,6 +151,18 @@ void setParameterValue(juce::AudioPluginInstance& plugin,
 
     if (it == paramMap.end()) {
         std::cerr << "Warning: Parameter not found: " << paramName << std::endl;
+        std::cerr << "Available parameters (excluding MIDI CC):" << std::endl;
+        int count = 0;
+        for (const auto& [name, param] : paramMap) {
+            // Filter out MIDI CC parameters
+            juce::String lowerName = name.toLowerCase();
+            if (lowerName.contains("midi") || lowerName.contains("cc ") || lowerName.startsWith("cc")) {
+                continue;
+            }
+            std::cerr << "  - '" << name << "'" << std::endl;
+            count++;
+        }
+        std::cerr << "Total: " << count << " parameters (excluding MIDI CC)" << std::endl;
         return;
     }
 

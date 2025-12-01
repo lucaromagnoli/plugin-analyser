@@ -1,8 +1,12 @@
 #include "ParameterConfigComponent.h"
+#include <algorithm>
+#include <map>
+#include <set>
 
-ParameterConfigComponent::ParameterConfigComponent(const juce::String& paramName) : paramName(paramName) {
+ParameterConfigComponent::ParameterConfigComponent(const juce::String& paramName, juce::AudioProcessorParameter* param)
+    : paramName(paramName), pluginParam(param) {
     nameLabel.setText(paramName, juce::dontSendNotification);
-    nameLabel.setFont(juce::Font(16.0f, juce::Font::bold));
+    nameLabel.setFont(juce::Font(16.0f).boldened());
     addAndMakeVisible(nameLabel);
 
     strategyLabel.setText("Strategy:", juce::dontSendNotification);
@@ -40,12 +44,25 @@ ParameterConfigComponent::ParameterConfigComponent(const juce::String& paramName
     valuesEditor.addListener(this);
     addAndMakeVisible(valuesEditor);
 
+    bucketCountLabel.setText("Buckets: 2", juce::dontSendNotification);
+    bucketCountLabel.setFont(juce::Font(12.0f).italicised());
+    addAndMakeVisible(bucketCountLabel);
+
+    smartRangeButton.setButtonText("Auto-Detect Range");
+    smartRangeButton.addListener(this);
+    addAndMakeVisible(smartRangeButton);
+
     currentConfig.paramName = paramName;
     currentConfig.strategy = "Linear";
     currentConfig.min = 0.0f;
     currentConfig.max = 1.0f;
     currentConfig.numBuckets = 5;
     currentConfig.values = {0.0f, 1.0f};
+
+    // Auto-detect smart range if parameter is available
+    if (pluginParam != nullptr) {
+        detectSmartRange();
+    }
 
     updateUI();
 }
@@ -86,10 +103,22 @@ void ParameterConfigComponent::resized() {
 
     valuesLabel.setBounds(bounds.removeFromTop(rowHeight));
     valuesEditor.setBounds(bounds.removeFromTop(40));
+    bounds.removeFromTop(5);
+    auto buttonRow = bounds.removeFromTop(rowHeight);
+    bucketCountLabel.setBounds(buttonRow.removeFromLeft(120));
+    buttonRow.removeFromLeft(10);
+    smartRangeButton.setBounds(buttonRow.removeFromLeft(150));
 }
 
 void ParameterConfigComponent::comboBoxChanged(juce::ComboBox* comboBox) {
     if (comboBox == &strategyCombo) {
+        updateUI();
+    }
+}
+
+void ParameterConfigComponent::buttonClicked(juce::Button* button) {
+    if (button == &smartRangeButton) {
+        detectSmartRange();
         updateUI();
     }
 }
@@ -110,6 +139,11 @@ void ParameterConfigComponent::textEditorTextChanged(juce::TextEditor& editor) {
             float val = (float)token.trim().getDoubleValue();
             currentConfig.values.push_back(val);
         }
+        // Update bucket count label for ExplicitValues
+        if (currentConfig.strategy == "ExplicitValues") {
+            bucketCountLabel.setText("Buckets: " + juce::String(currentConfig.values.size()),
+                                     juce::dontSendNotification);
+        }
     }
 }
 
@@ -128,6 +162,12 @@ void ParameterConfigComponent::updateUI() {
     numBucketsEditor.setVisible(showBuckets);
     valuesLabel.setVisible(showValues);
     valuesEditor.setVisible(showValues);
+    bucketCountLabel.setVisible(showValues); // Show bucket count for ExplicitValues
+
+    // Update bucket count when ExplicitValues is selected
+    if (showValues) {
+        bucketCountLabel.setText("Buckets: " + juce::String(currentConfig.values.size()), juce::dontSendNotification);
+    }
 
     // Update strategy string
     if (strategyId == 1)
@@ -171,4 +211,159 @@ void ParameterConfigComponent::setConfig(const ParameterBucketConfig& config) {
     valuesEditor.setText(valuesStr, juce::dontSendNotification);
 
     updateUI();
+}
+
+void ParameterConfigComponent::detectSmartRange() {
+    if (pluginParam == nullptr) {
+        std::cerr << "[detectSmartRange] No parameter provided for: " << paramName << std::endl;
+        return;
+    }
+
+    std::cerr << "[detectSmartRange] Detecting range for: " << paramName << std::endl;
+
+    try {
+        // Check if it's a choice parameter (discrete values)
+        if (auto* choiceParam = dynamic_cast<juce::AudioParameterChoice*>(pluginParam)) {
+            std::cerr << "[detectSmartRange] Found Choice parameter" << std::endl;
+            std::cerr << "[detectSmartRange] All choices from API:" << std::endl;
+            for (int i = 0; i < choiceParam->choices.size(); ++i) {
+                float normValue = (float)i / (float)(choiceParam->choices.size() - 1);
+                juce::String text = choiceParam->choices[i];
+                std::cerr << "[detectSmartRange]   index=" << i << " normVal=" << normValue << " text='" << text << "'"
+                          << std::endl;
+            }
+
+        } else if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(pluginParam)) {
+            std::cerr << "[detectSmartRange] Found Float parameter" << std::endl;
+            // Check if this looks like a gain parameter (input/output/pre) with range around -24 to +24
+            float minVal = floatParam->range.start;
+            float maxVal = floatParam->range.end;
+
+            std::cerr << "[detectSmartRange] Range: " << minVal << " to " << maxVal << std::endl;
+
+            // If range is approximately -24 to +24 (or similar symmetric gain range), use ExplicitValues
+            if ((minVal <= -20.0f && minVal >= -30.0f) && (maxVal >= 20.0f && maxVal <= 30.0f)) {
+                std::cerr << "[detectSmartRange] Detected gain parameter, using ExplicitValues" << std::endl;
+                // Use ExplicitValues with min, center, max (3 buckets)
+                currentConfig.strategy = "ExplicitValues";
+                currentConfig.values = {minVal, 0.0f, maxVal};
+
+                // Update UI
+                strategyCombo.setSelectedId(2); // ExplicitValues
+                juce::String valuesStr = juce::String(minVal, 1) + ", 0.0, " + juce::String(maxVal, 1);
+                valuesEditor.setText(valuesStr, juce::dontSendNotification);
+                bucketCountLabel.setText("Buckets: 3", juce::dontSendNotification);
+            } else {
+                // Use Linear strategy with actual parameter range
+                std::cerr << "[detectSmartRange] Using Linear with range " << minVal << " to " << maxVal << std::endl;
+                currentConfig.strategy = "Linear";
+                currentConfig.min = minVal;
+                currentConfig.max = maxVal;
+                currentConfig.numBuckets = 3; // Default to 3 buckets
+
+                // Update UI
+                strategyCombo.setSelectedId(1); // Linear
+                minEditor.setText(juce::String(currentConfig.min, 2), juce::dontSendNotification);
+                maxEditor.setText(juce::String(currentConfig.max, 2), juce::dontSendNotification);
+                numBucketsEditor.setText("3", juce::dontSendNotification);
+            }
+
+        } else if (auto* intParam = dynamic_cast<juce::AudioParameterInt*>(pluginParam)) {
+            // Use ExplicitValues strategy - sample normalized values
+            // Since we can't access the range directly, use common sampling points
+            currentConfig.strategy = "ExplicitValues";
+            currentConfig.values = {0.0f, 0.5f, 1.0f}; // min, mid, max normalized
+
+            // Update UI
+            strategyCombo.setSelectedId(2); // ExplicitValues
+            valuesEditor.setText("0.0, 0.5, 1.0", juce::dontSendNotification);
+            bucketCountLabel.setText("Buckets: 3", juce::dontSendNotification);
+
+        } else if (auto* boolParam = dynamic_cast<juce::AudioParameterBool*>(pluginParam)) {
+            // Use ExplicitValues with 0.0 and 1.0
+            currentConfig.strategy = "ExplicitValues";
+            currentConfig.values = {0.0f, 1.0f};
+
+            // Update UI
+            strategyCombo.setSelectedId(2); // ExplicitValues
+            valuesEditor.setText("0.0, 1.0", juce::dontSendNotification);
+            bucketCountLabel.setText("Buckets: 2", juce::dontSendNotification);
+
+        } else {
+            // Generic parameter (VST3Parameter) - Detect discrete ranges and print text values
+            std::cerr << "[detectSmartRange] Generic parameter, detecting discrete ranges..." << std::endl;
+
+            // Store original value
+            float originalValue = pluginParam->getValue();
+
+            // Sample to find where text changes (discrete boundaries)
+            juce::String prevText;
+            float prevPos = 0.0f;
+            std::vector<std::pair<float, float>> ranges; // (start, end) pairs
+            std::vector<juce::String> rangeTexts;
+
+            for (float normalizedPos = 0.0f; normalizedPos <= 1.0f; normalizedPos += 0.001f) {
+                pluginParam->setValueNotifyingHost(normalizedPos);
+                juce::String text = pluginParam->getText(pluginParam->getValue(), 512);
+
+                if (normalizedPos == 0.0f) {
+                    prevText = text;
+                    prevPos = 0.0f;
+                } else if (text != prevText) {
+                    // Text changed - this is a boundary
+                    ranges.push_back({prevPos, normalizedPos});
+                    rangeTexts.push_back(prevText);
+                    prevText = text;
+                    prevPos = normalizedPos;
+                }
+            }
+
+            // Add the last range
+            ranges.push_back({prevPos, 1.0f});
+            rangeTexts.push_back(prevText);
+
+            // Restore original value
+            pluginParam->setValueNotifyingHost(originalValue);
+
+            // Print all ranges and their text values
+            std::cerr << "[detectSmartRange] Found " << ranges.size() << " discrete ranges:" << std::endl;
+            for (size_t i = 0; i < ranges.size(); ++i) {
+                std::cerr << "[detectSmartRange]   Range [" << ranges[i].first << " - " << ranges[i].second
+                          << "] -> text='" << rangeTexts[i] << "'" << std::endl;
+            }
+
+            // Don't do anything smart - just leave it at defaults
+            currentConfig.strategy = "Linear";
+            currentConfig.min = 0.0f;
+            currentConfig.max = 1.0f;
+            currentConfig.numBuckets = 3;
+
+            strategyCombo.setSelectedId(1); // Linear
+            minEditor.setText("0.0", juce::dontSendNotification);
+            maxEditor.setText("1.0", juce::dontSendNotification);
+            numBucketsEditor.setText("3", juce::dontSendNotification);
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[detectSmartRange] ERROR: Exception caught: " << e.what() << std::endl;
+        // Fallback to safe defaults
+        currentConfig.strategy = "Linear";
+        currentConfig.min = 0.0f;
+        currentConfig.max = 1.0f;
+        currentConfig.numBuckets = 3;
+        strategyCombo.setSelectedId(1);
+        minEditor.setText("0.0", juce::dontSendNotification);
+        maxEditor.setText("1.0", juce::dontSendNotification);
+        numBucketsEditor.setText("3", juce::dontSendNotification);
+    } catch (...) {
+        std::cerr << "[detectSmartRange] ERROR: Unknown exception caught" << std::endl;
+        // Fallback to safe defaults
+        currentConfig.strategy = "Linear";
+        currentConfig.min = 0.0f;
+        currentConfig.max = 1.0f;
+        currentConfig.numBuckets = 3;
+        strategyCombo.setSelectedId(1);
+        minEditor.setText("0.0", juce::dontSendNotification);
+        maxEditor.setText("1.0", juce::dontSendNotification);
+        numBucketsEditor.setText("3", juce::dontSendNotification);
+    }
 }
