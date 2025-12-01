@@ -1,5 +1,7 @@
 # Plugin Analyser
 
+> **This repository has moved to [Conceptual-Machines/plugin-analyser](https://github.com/Conceptual-Machines/plugin-analyser)**
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++](https://img.shields.io/badge/C++-17-blue.svg)](https://en.cppreference.com/w/cpp/17)
 [![JUCE](https://img.shields.io/badge/JUCE-8.0-orange.svg)](https://juce.com/)
